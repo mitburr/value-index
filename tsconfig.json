@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "esnext", // Bun supports modern JavaScript features
+    "module": "esnext", // Use ES modules which Bun prefers
+    "moduleResolution": "bundler", // Optimize for bundling with Bun
+    "lib": ["esnext"], // This helps with modern JavaScript features
+    "types": ["bun-types"], // Add Bun's type definitions
+    "outDir": "./dist", // Compiled output directory
+    "rootDir": "./src", // Source directory
+    "strict": true, // Enable all strict type checking
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Ensure consistent file naming
+    "allowImportingTsExtensions": true, // Allow importing TypeScript files directly
+    "noEmit": true // Bun handles compilation, so no need to emit files
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
