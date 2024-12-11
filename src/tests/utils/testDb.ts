@@ -2,45 +2,38 @@ import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
 import { logger } from '../../utils/logger';
+import { settings } from '../../config/settings';
 
 export class TestDatabase {
   private static pool: Pool;
 
   static async initialize() {
     logger.startSection('Test Database Setup');
-    
+
+    // Connect to default postgres database first to create test database
     const pool = new Pool({
-      host: 'localhost',
-      port: 5432,
-      user: 'mitchell',
-      database: 'postgres' // Connect to default db first
+      ...settings.database,
+      database: 'postgres'  // Override database name temporarily
     });
 
     try {
       logger.info('Creating fresh test database', 'database');
-      await pool.query('DROP DATABASE IF EXISTS price_tracker_test');
-      await pool.query('CREATE DATABASE price_tracker_test');
-      
+      await pool.query(`DROP DATABASE IF EXISTS ${settings.testDatabase.database}`);
+      await pool.query(`CREATE DATABASE ${settings.testDatabase.database}`);
+
       await pool.end();
 
-      // Connect to new test database
-      this.pool = new Pool({
-        host: 'localhost',
-        port: 5432,
-        user: 'mitchell',
-        database: 'price_tracker_test'
-      });
+      // Connect to newly created test database
+      this.pool = new Pool(settings.testDatabase);
 
-      // Read and execute migration as a single statement
+      // Read and execute migration
       logger.info('Running migrations', 'database');
       const migration = fs.readFileSync(
         path.join(__dirname, '../../db/migrations/001_initial_schema.sql'),
         'utf8'
       );
-      
-      // Execute entire migration file as one statement
-      await this.pool.query(migration);
 
+      await this.pool.query(migration);
       logger.success('Test database ready', 'database');
     } catch (error) {
       logger.error(`Test database setup failed: ${error}`);

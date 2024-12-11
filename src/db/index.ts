@@ -1,7 +1,7 @@
-// src/db/index.ts
 import { Pool, PoolConfig, QueryResult } from 'pg';
+import { settings } from '../config/settings';
 
-// Type-safe config interface - all potential pg config options
+// Type-safe config interface for database configuration
 interface DatabaseConfig extends PoolConfig {
   host: string;
   port: number;
@@ -10,7 +10,6 @@ interface DatabaseConfig extends PoolConfig {
   password: string;
 }
 
-// Singleton pattern with TypeScript private constructor
 export class Database {
   private static instance: Database;
   private pool: Pool;
@@ -19,31 +18,19 @@ export class Database {
     this.pool = new Pool(config);
   }
 
-  // Type-safe generic query method
   public async query<T extends QueryResult>(text: string, params?: unknown[]): Promise<QueryResult<T>> {
     return this.pool.query(text, params);
   }
 
-  // Singleton instance getter with explicit DatabaseConfig type
-  public static getInstance(config: DatabaseConfig): Database {
+  public static getInstance(): Database {
     if (!Database.instance) {
-      Database.instance = new Database(config);
+      // Use settings for database configuration
+      Database.instance = new Database(settings.database);
     }
     return Database.instance;
   }
-  public getPool(): Pool {
-    return this.pool;
-}
+
 }
 
-// Usage example with type inference
-const config: DatabaseConfig = {
-  host: 'localhost',
-  port: 5432,
-  database: 'price_tracker',
-  user: 'mitchell',
-  password: 'crashing27'
-};
-
-export const db = Database.getInstance(config);
-
+// Export singleton instance using settings
+export const db = Database.getInstance();

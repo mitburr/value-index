@@ -1,10 +1,17 @@
 import { expect, test, describe, beforeAll, beforeEach, afterEach, afterAll } from "bun:test";
-import { ProductRepository } from "../db/repositories/products";
-import { Product } from "../models/product";
-import { TestDatabase } from './utils/testDb';
+import { ProductRepository } from "../../db/repositories/products.ts";
+import { Product } from "../../models/product.ts";
+import { TestDatabase } from '../utils/testDb.ts';
+import {Pool} from "pg";
+
+export class TestProductRepository extends ProductRepository {
+ getPool(): Pool {
+   return this.dbPool;
+ }
+}
 
 describe("ProductRepository", () => {
-  let repo: ProductRepository;
+  let repo: TestProductRepository;
   let retailerId: number;
 
   // Type for test data with readonly properties
@@ -35,10 +42,10 @@ describe("ProductRepository", () => {
 
   beforeEach(async () => {
     // Get fresh repository instance with test pool
-    repo = new ProductRepository(TestDatabase.getPool());
+    repo = new TestProductRepository(TestDatabase.getPool());
     
     // Insert test retailer
-    const result = await repo.dbPool.query<{ id: number }>(
+    const result = await repo.getPool().query<{ id: number }>(
       `INSERT INTO retailers (name, base_url, rate_limit)
        VALUES ($1, $2, $3)
        RETURNING id`,
