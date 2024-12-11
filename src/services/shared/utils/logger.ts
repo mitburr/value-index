@@ -1,5 +1,3 @@
-import { type } from "os";
-
 // Define log levels and their colors
 const colors = {
   info: "\x1b[36m",    // cyan

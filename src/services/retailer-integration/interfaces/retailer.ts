@@ -1,5 +1,3 @@
-// src/models/retailer.ts
-
 export interface Retailer {
     id: string;              // UUID
     name: string;

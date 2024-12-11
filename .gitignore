@@ -4,3 +4,12 @@ dist/
 *.log
 .DS_Store
 bun.lockb
+# Default ignored files
+/shelf/
+/workspace.xml
+.idea/
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml

@@ -1,136 +1,87 @@
-# Value Index
+# Value Index - Microservice Architecture
 
-Tracks product prices across multiple retailers to generate value indices and identify optimal purchase timing.
+A price tracking and analysis system built with TypeScript and microservices.
 
-## Project Goals
-- Monitor product prices across retailers
-- Generate value indices for price comparison
-- Identify price trends and optimal purchase times
-- Support multiple retailer integrations
+## Architecture Overview
 
-## Current Implementation
-- Database schema for retailers, products, and price history
-- Repository pattern for data access
-- Type-safe TypeScript implementation
-- Test coverage for core functionality
-- Environment-based configuration system
-- Logging system for application events
+The system is composed of independent microservices:
 
-## Prerequisites
-- PostgreSQL 14+
-- Bun 1.1.38+
-- Node.js 18+
-
-## Setup
-1. Clone repository:
-```bash
-git clone [repository-url]
-cd value-index
-```
-
-2. Install dependencies:
-```bash
-bun install
-```
-
-3. Set up environment variables:
-Create a `.env` file in the project root with the following variables:
-```bash
-# Database Configuration
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=price_tracker
-POSTGRES_TEST_DB=price_tracker_test
-
-# Logging Configuration
-LOG_LEVEL=debug
-LOG_FILE=app.log
-```
-
-4. Set up databases:
-```bash
-chmod +x scripts/db-setup.sh
-./scripts/db-setup.sh
-```
-
-## Configuration System
-The project uses a centralized settings management system:
-- Environment variables loaded from `.env` file
-- Type-safe configuration via `src/config/settings.ts`
-- Separate configurations for development and testing
-- Validation of required environment variables
-
-Access settings anywhere in the application:
-```typescript
-import { settings } from '../config/settings';
-
-// Database settings
-const dbConfig = settings.database;
-
-// Logging settings
-const logLevel = settings.logging.level;
-```
-
-## Development
-Run tests:
-```bash
-bun test                # All tests
-bun test src/tests/db.test.ts  # Specific test
-```
+- **Price Monitor**: Tracks product price changes
+- **Retailer Integration**: Manages connections to retail platforms
+- **Value Analysis**: Analyzes price trends and value metrics
+- **User Preferences**: Manages user settings and tracking preferences
+- **Notification**: Handles user alerts
+- **Shared**: Common utilities and configurations
 
 ## Project Structure
 ```
 src/
-├── config/            # Configuration management
-│   └── settings.ts    # Central settings handler
-├── db/                # Database operations
-├── models/            # TypeScript interfaces
-├── repositories/      # Data access layer
-├── services/          # Business logic
-├── utils/            # Helper functions
-└── tests/            # Test suites
+├── services/
+    ├── price-monitor/
+    │   ├── interfaces/
+    │   └── repositories/
+    ├── retailer-integration/
+    │   ├── interfaces/
+    │   ├── implementations/
+    │   ├── repositories/
+    │   └── tests/
+    ├── value-analysis/
+    │   ├── interfaces/
+    │   └── analyzers/
+    ├── user-preferences/
+    │   ├── interfaces/
+    │   └── repositories/
+    ├── notification/
+    │   ├── interfaces/
+    │   └── providers/
+    └── shared/
+        ├── config/
+        ├── utils/
+        └── db/
 ```
 
-## Core Features
+## Setup & Configuration
 
-### Retailer Management
-```typescript
-const retailer = await retailerRepo.create({
-  name: "Example Store",
-  base_url: "http://example.com",
-  rate_limit: 60
-});
+1. Environment Setup:
+```bash
+cp .env.example .env
+# Edit .env with your settings
 ```
 
-### Product Tracking
-```typescript
-const product = await productRepo.create({
-  retailerId: retailer.id,
-  externalId: "SKU123",
-  name: "Example Product",
-  category: "Electronics"
-});
+2. Install Dependencies:
+```bash
+bun install
 ```
 
-### Price History
-```typescript
-const priceEntry = await priceRepo.create({
-  productId: product.id,
-  price: 99.99,
-  currency: "USD"
-});
-
-const history = await priceRepo.getPriceHistory(
-  product.id,
-  startDate,
-  endDate
-);
+3. Database Setup:
+```bash
+./scripts/db-setup.sh
 ```
 
-## Coming Soon
-- Retailer-specific data fetching
-- Scheduler for regular price checks
-- Price analysis service
-- CLI interface
+## Development
+
+Each service can be developed and tested independently:
+
+```bash
+# Run all tests
+bun test
+
+# Test specific service
+bun test src/services/retailer-integration/tests
+```
+
+## Service Communication
+
+Services communicate through well-defined interfaces and maintain their own:
+- Database tables
+- Business logic
+- Tests
+- Type definitions
+
+## Contributing
+
+When adding features:
+1. Identify the appropriate service
+2. Follow the service's interface definitions
+3. Add tests in the service's test directory
+4. Update shared components only when necessary

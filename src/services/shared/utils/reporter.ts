@@ -1,5 +1,3 @@
-// src/utils/reporter.ts
-
 type ReportLevel = 'info' | 'warn' | 'error' | 'debug';
 
 class Reporter {
