@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { Retailer } from '../../models/retailer';
+import { Retailer } from '../interfaces/retailer';
 
 export class RetailerRepository {
   constructor(protected dbPool: Pool) {}

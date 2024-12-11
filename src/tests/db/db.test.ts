@@ -19,7 +19,7 @@ describe('Database', () => {
 
   test('should connect to database', async () => {
     logger.info('Testing database connection', 'test');
-    
+
     const result = await pool.query('SELECT version()');
     expect(result.rows[0]).toBeDefined();
     logger.success('Successfully connected to database', 'test');
@@ -46,10 +46,10 @@ describe('Database', () => {
     logger.info('Testing transaction support', 'test');
 
     const client = await pool.connect();
-    
+
     try {
       await client.query('BEGIN');
-      
+
       await client.query(`
         INSERT INTO retailers (name, base_url, rate_limit)
         VALUES ($1, $2, $3)
@@ -68,7 +68,7 @@ describe('Database', () => {
         "SELECT * FROM retailers WHERE name = 'Transaction Test'"
       );
       expect(result.rows.length).toBe(0);
-      
+
       logger.success('Successfully tested transaction support', 'test');
     } finally {
       client.release();

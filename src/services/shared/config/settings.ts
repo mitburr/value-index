@@ -1,6 +1,19 @@
 import { config } from 'dotenv';
-import { verifyEnv } from '../utils/verify-env';
+import { verifyEnv } from '../utils/verify-env.ts';
 
+interface Settings {
+  database: DatabaseSettings;
+  testDatabase: DatabaseSettings;
+  logging: {
+    level: string;
+    file: string;
+  };
+  retailers: Record<string, {  // Add retailer configurations
+    apiKey: string;
+    baseUrl: string;
+    rateLimit: number;
+  }>;
+}
 verifyEnv();  // Call before settings configuration
 
 config();

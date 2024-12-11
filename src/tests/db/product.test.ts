@@ -1,7 +1,7 @@
 import { expect, test, describe, beforeAll, beforeEach, afterEach, afterAll } from "bun:test";
-import { ProductRepository } from "../../db/repositories/products.ts";
-import { Product } from "../../models/product.ts";
-import { TestDatabase } from '../utils/testDb.ts';
+import { ProductRepository } from "../../services/retailer-integration/repositories/product-repository"
+import { Product } from "../../services/retailer-integration/interfaces/product";
+import { TestDatabase } from '../utils/testDb';
 import {Pool} from "pg";
 
 export class TestProductRepository extends ProductRepository {
@@ -12,7 +12,7 @@ export class TestProductRepository extends ProductRepository {
 
 describe("ProductRepository", () => {
   let repo: TestProductRepository;
-  let retailerId: number;
+  let retailerId: string;
 
   // Type for test data with readonly properties
   type TestRetailer = Readonly<{
@@ -43,9 +43,9 @@ describe("ProductRepository", () => {
   beforeEach(async () => {
     // Get fresh repository instance with test pool
     repo = new TestProductRepository(TestDatabase.getPool());
-    
+
     // Insert test retailer
-    const result = await repo.getPool().query<{ id: number }>(
+    const result = await repo.getPool().query<{ id: string }>(
       `INSERT INTO retailers (name, base_url, rate_limit)
        VALUES ($1, $2, $3)
        RETURNING id`,
@@ -71,7 +71,7 @@ describe("ProductRepository", () => {
     };
 
     await repo.create(product);
-    
+
     // Using unknown type for error handling
     const duplicateAttempt = repo.create(product) as Promise<unknown>;
     await expect(duplicateAttempt).rejects.toThrow();
@@ -80,29 +80,32 @@ describe("ProductRepository", () => {
   test("should find products by category", async () => {
     // Using Record utility type for attributes
     type ProductAttributes = Record<string, string>;
-    
+    const laptopAttributes: ProductAttributes = { type: "laptop" };
+    const phoneAttributes: ProductAttributes = { type: "phone" };
+
+
     const products = await Promise.all([
-      repo.create({
-        retailerId,
-        externalId: "CAT1",
-        name: "Product 1",
-        category: "Electronics",
-        attributes: { type: "laptop" } as ProductAttributes,
-        active: true
-      }),
-      repo.create({
-        retailerId,
-        externalId: "CAT2",
-        name: "Product 2",
-        category: "Electronics",
-        attributes: { type: "phone" } as ProductAttributes,
-        active: true
-      })
-    ]);
+    repo.create({
+      retailerId,
+      externalId: "CAT1",
+      name: "Product 1",
+      category: "Electronics",
+      attributes: laptopAttributes,
+      active: true
+    }),
+    repo.create({
+      retailerId,
+      externalId: "CAT2",
+      name: "Product 2",
+      category: "Electronics",
+      attributes: phoneAttributes,
+      active: true
+    })
+  ]);
 
     const found = await repo.findByCategory("Electronics");
     expect(found.length).toBe(2);
-  });
+});
 
   test("should handle product deactivation", async () => {
     const product = await repo.create({

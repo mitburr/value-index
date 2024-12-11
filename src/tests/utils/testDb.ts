@@ -1,8 +1,8 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
-import { logger } from '../../utils/logger';
-import { settings } from '../../config/settings';
+import { logger } from '../../services/shared/utils/logger';
+import { settings } from '../../services/shared/config/settings';
 
 export class TestDatabase {
   private static pool: Pool;
