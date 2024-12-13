@@ -9,7 +9,7 @@ let options: DotenvConfigOptions
 
 try {
   const envPath = await search.findFile('.env');
-  console.log(`Found file at: ${envPath}`);
+  logger.info(`Found file at: ${envPath}`, 'info');
   options = {
       path: envPath
   }

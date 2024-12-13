@@ -3,7 +3,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "u/*": ["src/services/shared/utils/*"]
+      "u/*": ["src/services/shared/utils/*"],
+      "services/*": ["src/services//*"]
     },
     "target": "esnext", // Bun supports modern JavaScript features
     "module": "esnext", // Use ES modules which Bun prefers

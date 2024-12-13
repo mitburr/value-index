@@ -55,6 +55,12 @@ export const settings: Settings = {
     file: process.env.LOG_FILE || 'app.log'
   },
   retailers: {
+
+    bestBuy: {
+      apiKey: validateEnvVariable('BESTBUY_API_KEY'),
+      baseUrl: validateEnvVariable('BESTBUY_BASE_URL'),
+      rateLimit: 10
+    }
     // Add your retailer configurations here
   }
 };
