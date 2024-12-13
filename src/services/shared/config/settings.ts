@@ -56,15 +56,5 @@ export const settings: Settings = {
   },
   retailers: {
     // Add your retailer configurations here
-    amazon: {
-      apiKey: validateEnvVariable('AMAZON_API_KEY'),
-      baseUrl: validateEnvVariable('AMAZON_BASE_URL'),
-      rateLimit: Number(validateEnvVariable('AMAZON_RATE_LIMIT'))
-    },
-    walmart: {
-      apiKey: validateEnvVariable('WALMART_API_KEY'),
-      baseUrl: validateEnvVariable('WALMART_BASE_URL'),
-      rateLimit: Number(validateEnvVariable('WALMART_RATE_LIMIT'))
-    }
   }
 };
