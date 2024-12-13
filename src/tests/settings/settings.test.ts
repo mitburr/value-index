@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { settings } from "../../config/settings";
+import { settings } from "@/services/shared/config/settings";
 
 describe("Settings Configuration", () => {
   test("should load database settings correctly", () => {

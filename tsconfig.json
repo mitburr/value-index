@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "u/*": ["src/services/shared/utils/*"]
+    },
     "target": "esnext", // Bun supports modern JavaScript features
     "module": "esnext", // Use ES modules which Bun prefers
     "moduleResolution": "bundler", // Optimize for bundling with Bun

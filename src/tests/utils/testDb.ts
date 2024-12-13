@@ -1,45 +1,65 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
-import { logger } from '../../services/shared/utils/logger';
-import { settings } from '../../services/shared/config/settings';
+import { logger } from 'u/logger.ts';
+import { settings } from '@/services/shared/config/settings.ts';
+import {search} from "u/file-name-search.ts";
+import {SearchErrors} from "@/services/shared/types";
 
 export class TestDatabase {
   private static pool: Pool;
 
   static async initialize() {
-    logger.startSection('Test Database Setup');
+  logger.startSection('Test Database Setup');
 
-    // Connect to default postgres database first to create test database
-    const pool = new Pool({
-      ...settings.database,
-      database: 'postgres'  // Override database name temporarily
-    });
+  // Connect to default postgres database first to create test database
+  const pool = new Pool({
+    ...settings.database,
+    database: 'postgres'  // Override database name temporarily
+  });
+
+  try {
+    logger.info('Creating fresh test database', 'database');
+    await pool.query(`DROP DATABASE IF EXISTS ${settings.testDatabase.database}`);
+    await pool.query(`CREATE DATABASE ${settings.testDatabase.database}`);
+
+    await pool.end();
+
+    // Connect to newly created test database
+    this.pool = new Pool(settings.testDatabase);
+
+    // Read and execute migrations
+    logger.info('Running migrations', 'database');
+    const migrations: string[] = [];
+    let files: string[];
 
     try {
-      logger.info('Creating fresh test database', 'database');
-      await pool.query(`DROP DATABASE IF EXISTS ${settings.testDatabase.database}`);
-      await pool.query(`CREATE DATABASE ${settings.testDatabase.database}`);
+      files = await search.findDirectoryFiles('migrations');
+      logger.list('files found in the migrations directory', files);
+      files.forEach((file) => {
+        migrations.push(fs.readFileSync(file, 'utf8'));
+      });
 
-      await pool.end();
+      // Execute each migration
+      for (const migration of migrations) {
+        logger.debug(`Executing migration: ${migration.substring(0, 50)}...`);
+        await this.pool.query(migration);
+      }
 
-      // Connect to newly created test database
-      this.pool = new Pool(settings.testDatabase);
-
-      // Read and execute migration
-      logger.info('Running migrations', 'database');
-      const migration = fs.readFileSync(
-        path.join(__dirname, '../../db/migrations/001_initial_schema.sql'),
-        'utf8'
-      );
-
-      await this.pool.query(migration);
       logger.success('Test database ready', 'database');
-    } catch (error) {
-      logger.error(`Test database setup failed: ${error}`);
-      throw error;
+    } catch (e) {
+      if (e instanceof SearchErrors.FileNotFoundException) {
+        logger.error('Directory not found');
+      } else {
+        logger.error(`Error searching for directory: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      throw e;
     }
+  } catch (error) {
+    logger.error(`Test database setup failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
   }
+}
 
   static async cleanup() {
     if (this.pool) {

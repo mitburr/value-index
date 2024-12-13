@@ -47,6 +47,7 @@ export class RetailerRepository {
       'DELETE FROM retailers WHERE id = $1',
       [id]
     );
+    // @ts-ignore
     return result.rowCount > 0;
   }
 }

@@ -1,9 +1,29 @@
 // src/services/shared/utils/verify-env.ts
-import { config } from 'dotenv';
+import { config, DotenvConfigOptions } from 'dotenv';
 import { logger } from './logger';
 
+import { search } from 'u/file-name-search';
+import { SearchErrors } from '../types/errors';
+
+let options: DotenvConfigOptions
+
+try {
+  const envPath = await search.findFile('.env');
+  console.log(`Found file at: ${envPath}`);
+  options = {
+      path: envPath
+  }
+
+} catch (error) {
+  if (error instanceof SearchErrors.FileNotFoundException) {
+    throw SearchErrors.FileNotFoundException
+  } else if (error instanceof SearchErrors.MultipleFilesFoundException) {
+    throw SearchErrors.MultipleFilesFoundException
+  }
+}
+
 export function verifyEnv(): void {
- const result = config();
+ const result = config(options);
 
  if (result.error) {
    logger.error('Failed to load .env file');

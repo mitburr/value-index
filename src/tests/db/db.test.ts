@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { TestDatabase } from '../utils/testDb.ts';
 import { Pool } from 'pg';
-import { logger } from '../../services/shared/utils/logger.ts';
+import { logger } from 'u/logger.ts';
 
 describe('Database', () => {
   let pool: Pool;

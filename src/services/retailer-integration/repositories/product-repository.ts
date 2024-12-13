@@ -56,6 +56,7 @@ export class ProductRepository {
      'DELETE FROM products WHERE id = $1',
      [id]
    );
-   return result.rowCount > 0;
+   // @ts-ignore
+     return result.rowCount > 0;
  }
 }

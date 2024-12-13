@@ -64,6 +64,35 @@ class Logger {
     console.log(this.format(`=== Completed: ${title} ===`, 'success', 'end') + '\n');
   }
 
+  private formatValue(value: any, indent: number = 0): string {
+    const spaces = '  '.repeat(indent);
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) return `${spaces}[]`;
+      return `\n${value.map(item => `${spaces}- ${this.formatValue(item, indent + 1)}`).join('\n')}`;
+    }
+
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+
+    if (typeof value === 'object') {
+      if (Object.keys(value).length === 0) return `${spaces}{}`;
+      return `\n${Object.entries(value)
+        .map(([key, val]) => `${spaces}  ${key}: ${this.formatValue(val, indent + 1)}`)
+        .join('\n')}`;
+    }
+
+    return String(value);
+  }
+
+  list(title: string, items: any[], level: LogLevel = 'info', prefix?: LogPrefix): void {
+    const formattedTitle = title ? `${title}:` : '';
+    const formattedItems = this.formatValue(items);
+    const message = `${formattedTitle}${formattedItems}`;
+    console.log(this.format(message, level, prefix));
+  }
+
+
   // Database specific logging
   dbQuery(query: string): void {
     this.debug(`Executing query: ${query}`, 'database');

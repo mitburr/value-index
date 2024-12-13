@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { PriceHistory } from '../../models/price';
+import { PriceHistory } from '../interfaces/price';
 
 export class PriceHistoryRepository {
   constructor(protected dbPool: Pool) {}
