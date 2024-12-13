@@ -10,29 +10,69 @@ The system is composed of independent microservices:
 - **Value Analysis**: Analyzes price trends and value metrics
 - **Shared**: Common utilities and configurations
 
-## Project Structure
-```
-src/
-├── services/
-    ├── price-monitor/
-    │   ├── interfaces/
-    │   └── repositories/
-    ├── retailer-integration/
-    │   ├── interfaces/
-    │   ├── implementations/
-    │   ├── repositories/
-    │   └── tests/
-    ├── shared/
-    │   ├── config/
-    │   │   └── settings.ts      # Centralized settings management
-    │   ├── types/
-    │   │   └── errors.ts        # Custom error types
-    │   ├── utils/
-    │   │   ├── logger.ts        # Logging utility
-    │   │   ├── search.ts        # File/directory search utility
-    │   │   └── verify-env.ts    # Environment verification
-    │   └── db/
-    │       └── migrations/      # Database migrations
+# Project Structure
+```bash
+├── README.md
+├── bun.lockb
+├── package.json
+├── src
+│   ├── index.ts
+│   ├── services
+│   │   ├── cache.ts
+│   │   ├── notification
+│   │   │   ├── interfaces/
+│   │   │   └── providers/
+│   │   ├── price-monitor
+│   │   │   ├── interfaces/
+│   │   │   │   └── price.ts
+│   │   │   └── repositories/
+│   │   │       └── prices.ts 
+│   │   ├── retailer-integration
+│   │   │   ├── implementations/
+│   │   │   │   ├── amazonRetailer.ts
+│   │   │   │   └── walmartRetailer.ts
+│   │   │   ├── interfaces/
+│   │   │   │   ├── product.ts
+│   │   │   │   └── retailer.ts
+│   │   │   ├── repositories/
+│   │   │   │   ├── product-repository.ts
+│   │   │   │   └── retailers.ts
+│   │   │   └── tests/
+│   │   ├── scheduler.ts
+│   │   ├── shared
+│   │   │   ├── config/
+│   │   │   │   └── settings.ts
+│   │   │   ├── db/
+│   │   │   │   └── migrations/
+│   │   │   │       └── 001_initial_schema.sql
+│   │   │   ├── interfaces/
+│   │   │   ├── types/
+│   │   │   │   ├── errors.ts
+│   │   │   │   └── index.ts
+│   │   │   └── utils/
+│   │   │       ├── file-name-search.ts
+│   │   │       ├── logger.ts
+│   │   │       ├── reporter.ts
+│   │   │       └── verify-env.ts
+│   │   ├── user-preferences
+│   │   │   ├── interfaces/
+│   │   │   └── repositories/
+│   │   └── value-analysis
+│   │       ├── analyzers/
+│   │       │   └── priceAnalysis.ts
+│   │       └── interfaces/
+│   └── tests
+│       ├── basic.test.ts
+│       ├── db/
+│       │   ├── db.test.ts
+│       │   └── product.test.ts
+│       ├── settings/
+│       │   └── settings.test.ts
+│       └── utils/
+│           └── testDb.ts
+├── tsconfig.json
+├── tslint.json
+└── yarn.lock
 ```
 
 ## Key Features
