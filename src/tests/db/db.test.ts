@@ -55,7 +55,7 @@ describe('Database', () => {
         VALUES ($1, $2, $3)
       `, ['Transaction Test', 'http://test.com', 60]);
 
-      // Simulate a condition that should rollback
+      // Simulate a condition that should roll back
       const shouldRollback = true;
       if (shouldRollback) {
         await client.query('ROLLBACK');
