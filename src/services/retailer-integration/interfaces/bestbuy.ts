@@ -23,4 +23,5 @@ export interface BestBuyConfig {
   apiKey: string;
   baseUrl: string;
   rateLimit: number;
+  testMode?: boolean;
 }

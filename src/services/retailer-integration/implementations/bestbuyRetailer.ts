@@ -1,42 +1,69 @@
-// src/services/retailer-integration/implementations/bestBuyService.ts
+// src/services/retailer-integration/implementations/bestbuyService.ts
 
 import { Product } from '../interfaces/product';
 import { BestBuyProductResponse, BestBuySearchParams, BestBuyConfig } from '../interfaces/bestbuy';
-import { logger } from '../../shared/utils/logger';
+import { Semaphore } from 'u/semaphore.ts';
+import { logger } from 'u/logger.ts';
+import { HttpErrorFactory } from 'services/shared/types';
 
 export class BestBuyService {
-  private lastRequestTime: Date = new Date(0);
+  private semaphore: Semaphore;
+  private permits: Map<number, Timer> = new Map();
+  private permitCounter = 0;
 
-  constructor(private config: BestBuyConfig) {}
-
-  private async throttleRequest(): Promise<void> {
-    const now = new Date();
-    const timeSinceLastRequest = now.getTime() - this.lastRequestTime.getTime();
-    const minDelay = (60 * 1000) / this.config.rateLimit;
-
-    if (timeSinceLastRequest < minDelay) {
-      await new Promise(resolve => setTimeout(resolve, minDelay - timeSinceLastRequest));
+  constructor(private config: BestBuyConfig) {
+    // Enable debug logging only in test mode
+    this.semaphore = new Semaphore(config.rateLimit, config.testMode);
+    if (config.testMode) {
+      logger.info(`BestBuy service initialized with rate limit: ${config.rateLimit}`);
     }
-
-    this.lastRequestTime = new Date();
   }
 
-  private mapToProduct(bestBuyProduct: BestBuyProductResponse): Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'> {
+  private async throttleRequest(): Promise<void> {
+    logger.info(`Request ${this.permitCounter} attempting to acquire permit`);
+    await this.semaphore.acquire();
+
+    const permitId = this.permitCounter++;
+    logger.info(`Setting up permit release timer for request ${permitId}`);
+
+    const delay = process.env.NODE_ENV === 'test' ? 1000 : 60 * 1000;
+
+    const timeout = setTimeout(() => {
+      logger.info(`Timer expired for permit ${permitId}, releasing`);
+      this.semaphore.release();
+      this.permits.delete(permitId);
+      logger.info(`Permit ${permitId} has been released`);
+    }, delay);
+
+    this.permits.set(permitId, timeout);
+    logger.info(`Permit ${permitId} issued and tracked`);
+}
+
+  public cleanup(): void {
+    logger.info(`Cleaning up ${this.permits.size} permits`);
+    for (const timeout of this.permits.values()) {
+      clearTimeout(timeout);
+    }
+    this.permits.clear();
+    logger.info('All permits cleaned up');
+  }
+
+  private mapToProduct(bestbuyProduct: BestBuyProductResponse): Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'> {
     return {
-      externalId: bestBuyProduct.sku,
-      name: bestBuyProduct.name,
-      category: bestBuyProduct.categoryPath[bestBuyProduct.categoryPath.length - 1] || 'Uncategorized',
+      externalId: bestbuyProduct.sku,
+      name: bestbuyProduct.name,
+      category: bestbuyProduct.categoryPath[bestbuyProduct.categoryPath.length - 1] || 'Uncategorized',
       attributes: {
-        manufacturer: bestBuyProduct.manufacturer,
-        modelNumber: bestBuyProduct.modelNumber,
-        description: bestBuyProduct.description,
-        image: bestBuyProduct.image,
-        regularPrice: bestBuyProduct.regularPrice,
-        inStoreAvailability: bestBuyProduct.inStoreAvailability,
-        onlineAvailability: bestBuyProduct.onlineAvailability,
-        categoryPath: bestBuyProduct.categoryPath
+        manufacturer: bestbuyProduct.manufacturer,
+        modelNumber: bestbuyProduct.modelNumber,
+        description: bestbuyProduct.description,
+        image: bestbuyProduct.image,
+        regularPrice: bestbuyProduct.regularPrice,
+        inStoreAvailability: bestbuyProduct.inStoreAvailability,
+        onlineAvailability: bestbuyProduct.onlineAvailability,
+        categoryPath: bestbuyProduct.categoryPath
       },
-      active: bestBuyProduct.onlineAvailability
+      active: bestbuyProduct.onlineAvailability
     };
   }
 

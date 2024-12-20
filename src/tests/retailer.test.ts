@@ -1,7 +1,7 @@
 // src/tests/services/retailer-integration/integration-tests/bestbuy.test.ts
 
 import { describe, test, expect, beforeAll } from "bun:test";
-import { BestBuyService } from 'services/retailer-integration/implementations/bestBuyService';
+import { BestBuyService } from 'services/retailer-integration/implementations/bestbuyRetailer.ts';
 import { BestBuyConfig } from 'services/retailer-integration/interfaces/bestbuy';
 import { settings } from 'services/shared/config/settings';
 import { logger } from 'u/logger';
@@ -29,7 +29,7 @@ describe('BestBuy API Integration', () => {
     const sku = '6487433'; // iPhone 14 Pro Max
     const product = await service.getProduct(sku);
 
-    logger.info('Retrieved product:', product);
+    logger.info(`Retrieved product: ${product}`);
 
     expect(product).not.toBeNull();
     expect(product?.name).toContain('iPhone');
@@ -47,7 +47,7 @@ describe('BestBuy API Integration', () => {
       pageSize: 5
     });
 
-    logger.info('Search results:', searchResults);
+    logger.info(`Search results: ${searchResults}`);
 
     expect(searchResults.length).toBeGreaterThan(0);
     expect(searchResults[0].name.toLowerCase()).toContain('macbook');
@@ -70,7 +70,7 @@ describe('BestBuy API Integration', () => {
       pageSize: 5
     });
 
-    logger.info('Category search results:', results);
+    logger.info(`Category search results: ${results}`);
 
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].category).toBe('Cell Phones');

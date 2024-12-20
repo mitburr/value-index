@@ -1,9 +1,8 @@
 // src/services/shared/utils/search.ts
 
-import { readdir } from 'fs/promises';
+import { readdir, access } from 'fs/promises';
 import { join, resolve, relative, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { access } from 'fs/promises';
 import { logger } from './logger';
 import { SearchErrors } from '../types/errors';
 
@@ -119,7 +118,7 @@ export class SearchService {
 
     try {
       // Get the project root by looking for package.json
-      const projectRoot = await this.findProjectRoot(dirname(fileURLToPath(import.meta.url)));
+      const projectRoot = await this.findProjectRoot(dirname(fileURLToPath(import .meta.url)));
       logger.info(`Starting search from project root: ${projectRoot}`);
       logger.debug(`Current working directory: ${process.cwd()}`);
 
@@ -157,7 +156,7 @@ export class SearchService {
 
     try {
       // Get the project root by looking for package.json
-      const projectRoot = await this.findProjectRoot(dirname(fileURLToPath(import.meta.url)));
+      const projectRoot = await this.findProjectRoot(dirname(fileURLToPath(import .meta.url)));
       logger.info(`Starting search from project root: ${projectRoot}`);
       logger.debug(`Current working directory: ${process.cwd()}`);
 
