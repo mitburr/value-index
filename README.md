@@ -1,10 +1,11 @@
-# Value Index - Microservice Architecture
+# Value Index 
 
 A price tracking and analysis system built with TypeScript and microservices.
+Mostly a coding exercise for me. 
 
 ## Architecture Overview
 
-The system is composed of independent microservices:
+The system is composed of independent services:
 - **Price Monitor**: Tracks product price changes
 - **Retailer Integration**: Manages connections to retail platforms
 - **Value Analysis**: Analyzes price trends and value metrics
