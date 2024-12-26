@@ -3,7 +3,7 @@ import { config, DotenvConfigOptions } from 'dotenv';
 import { logger } from './logger';
 
 import { search } from 'u/file-name-search';
-import { SearchErrors } from '../types/errors';
+import {FileNotFoundException, MultipleFilesFoundException} from "@/services/shared/types/errors";
 
 let options: DotenvConfigOptions
 
@@ -15,10 +15,10 @@ try {
   }
 
 } catch (error) {
-  if (error instanceof SearchErrors.FileNotFoundException) {
-    throw SearchErrors.FileNotFoundException
-  } else if (error instanceof SearchErrors.MultipleFilesFoundException) {
-    throw SearchErrors.MultipleFilesFoundException
+  if (error instanceof FileNotFoundException) {
+    throw FileNotFoundException
+  } else if (error instanceof MultipleFilesFoundException) {
+    throw MultipleFilesFoundException
   }
 }
 

@@ -4,7 +4,7 @@ import { Product } from '../interfaces/product';
 import { BestBuyProductResponse, BestBuySearchParams, BestBuyConfig } from '../interfaces/bestbuy';
 import { Semaphore } from 'u/semaphore.ts';
 import { logger } from 'u/logger.ts';
-import { HttpErrorFactory } from 'services/shared/types';
+import { HttpWarningFactory } from 'services/shared/types';
 
 export class BestBuyService {
   private semaphore: Semaphore;
@@ -20,23 +20,23 @@ export class BestBuyService {
   }
 
   private async throttleRequest(): Promise<void> {
-    logger.info(`Request ${this.permitCounter} attempting to acquire permit`);
+    // logger.info(`Request ${this.permitCounter} attempting to acquire permit`);
     await this.semaphore.acquire();
 
     const permitId = this.permitCounter++;
-    logger.info(`Setting up permit release timer for request ${permitId}`);
+    // logger.info(`Setting up permit release timer for request ${permitId}`);
 
     const delay = process.env.NODE_ENV === 'test' ? 1000 : 60 * 1000;
 
     const timeout = setTimeout(() => {
-      logger.info(`Timer expired for permit ${permitId}, releasing`);
+      // logger.info(`Timer expired for permit ${permitId}, releasing`);
       this.semaphore.release();
       this.permits.delete(permitId);
-      logger.info(`Permit ${permitId} has been released`);
+      // logger.info(`Permit ${permitId} has been released`);
     }, delay);
 
     this.permits.set(permitId, timeout);
-    logger.info(`Permit ${permitId} issued and tracked`);
+    // logger.info(`Permit ${permitId} issued and tracked`);
 }
 
   public cleanup(): void {

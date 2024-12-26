@@ -4,7 +4,7 @@ import { readdir, access } from 'fs/promises';
 import { join, resolve, relative, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger';
-import { SearchErrors } from '../types/errors';
+import {FileNotFoundException, MultipleFilesFoundException} from "@/services/shared/types/errors";
 
 export class SearchService {
   private async findProjectRoot(startPath: string): Promise<string> {
@@ -128,13 +128,13 @@ export class SearchService {
       // Handle results
       if (foundFiles.length === 0) {
         logger.error(`No files found with name: ${filename}`);
-        throw new SearchErrors.FileNotFoundException(filename);
+        throw new FileNotFoundException(filename);
       }
 
       if (foundFiles.length > 1) {
         logger.warn(`Multiple files found with name: ${filename}`);
         foundFiles.forEach(path => logger.debug(`Found at: ${path}`));
-        throw new SearchErrors.MultipleFilesFoundException(filename, foundFiles);
+        throw new MultipleFilesFoundException(filename, foundFiles);
       }
 
       logger.success(`File found at: ${foundFiles[0]}`);
@@ -142,8 +142,8 @@ export class SearchService {
 
       return foundFiles[0];
     } catch (error) {
-      if (error instanceof SearchErrors.FileNotFoundException ||
-          error instanceof SearchErrors.MultipleFilesFoundException) {
+      if (error instanceof FileNotFoundException ||
+          error instanceof MultipleFilesFoundException) {
         throw error;
       }
       logger.error(`Error during file search: ${error instanceof Error ? error.message : String(error)}`);
@@ -166,7 +166,7 @@ export class SearchService {
       // Handle results
       if (foundFiles.length === 0) {
         logger.error(`No directory found with name: ${directoryName}`);
-        throw new SearchErrors.FileNotFoundException(directoryName);
+        throw new FileNotFoundException(directoryName);
       }
 
       logger.success(`Found ${foundFiles.length} files in directory "${directoryName}"`);
@@ -175,7 +175,7 @@ export class SearchService {
 
       return foundFiles;
     } catch (error) {
-      if (error instanceof SearchErrors.FileNotFoundException) {
+      if (error instanceof FileNotFoundException) {
         throw error;
       }
       logger.error(`Error during directory search: ${error instanceof Error ? error.message : String(error)}`);

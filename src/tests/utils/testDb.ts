@@ -4,7 +4,7 @@ import path from 'path';
 import { logger } from 'u/logger.ts';
 import { settings } from '@/services/shared/config/settings.ts';
 import {search} from "u/file-name-search.ts";
-import {SearchErrors} from "@/services/shared/types";
+import {FileNotFoundException, MultipleFilesFoundException} from "@/services/shared/types/errors";
 
 export class TestDatabase {
   private static pool: Pool;
@@ -48,7 +48,7 @@ export class TestDatabase {
 
       logger.success('Test database ready', 'database');
     } catch (e) {
-      if (e instanceof SearchErrors.FileNotFoundException) {
+      if (e instanceof FileNotFoundException) {
         logger.error('Directory not found');
       } else {
         logger.error(`Error searching for directory: ${e instanceof Error ? e.message : String(e)}`);
