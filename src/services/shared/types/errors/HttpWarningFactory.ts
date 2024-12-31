@@ -5,6 +5,38 @@ export class HttpWarningFactory {
    return new HttpWarning(statusCode, message, code);
  }
 
+   static UnknownHttpWarning(statusCode: number, message: string, code?: string): HttpWarning {
+    return this.create(statusCode, message, code);
+  }
+
+  static fromResponse(response: Response, context: string = ''): HttpWarning | null {
+    if (response.ok) return null;
+
+    const prefix = context ? `${context}: ` : '';
+
+    switch (response.status) {
+      case 400:
+        return this.BadRequest(`${prefix}Invalid request`);
+      case 401:
+        return this.Unauthorized(`${prefix}Invalid API key`);
+      case 403:
+        return this.Forbidden(`${prefix}Access denied`);
+      case 404:
+        return this.NotFound(`${prefix}Resource not found`);
+      case 429:
+        return this.RateLimitExceeded(`${prefix}Rate limit exceeded`);
+      case 500:
+        return this.InternalServer(`${prefix}Server error`);
+      case 502:
+        return this.BadGateway(`${prefix}Gateway error`);
+      case 503:
+        return this.ServiceUnavailable(`${prefix}Service unavailable`);
+      default:
+        return this.create(response.status, `${prefix}HTTP error ${response.status}`);
+    }
+  }
+
+
  // Client Errors (4xx)
  static BadRequest(message = 'Bad Request', code?: string): HttpWarning {
    return this.create(400, message, code);

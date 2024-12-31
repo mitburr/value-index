@@ -4,9 +4,17 @@ export interface Product {
   externalId: string;
   name: string;
   category: string;
-  attributes: Record<string, unknown>;
+  attributes: {
+    manufacturer: string;
+    modelNumber: string;
+    description: string;
+    image: string;
+    regularPrice: number;
+    inStoreAvailability: boolean;
+    onlineAvailability: boolean;
+    categoryPath: string[];
+  };
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
-

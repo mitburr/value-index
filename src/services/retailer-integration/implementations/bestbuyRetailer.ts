@@ -4,7 +4,7 @@ import { Product } from '../interfaces/product';
 import { BestBuyProductResponse, BestBuySearchParams, BestBuyConfig } from '../interfaces/bestbuy';
 import { Semaphore } from 'u/semaphore.ts';
 import { logger } from 'u/logger.ts';
-import { HttpWarningFactory } from 'services/shared/types';
+import {HttpWarning, HttpWarningFactory} from 'services/shared/types';
 
 export class BestBuyService {
   private semaphore: Semaphore;
@@ -67,7 +67,7 @@ export class BestBuyService {
     };
   }
 
-  async getProduct(sku: string): Promise<Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'> | null> {
+  async getProduct(sku: string): Promise<{ data?: Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'>; warning?: HttpWarning }> {
     try {
       await this.throttleRequest();
 
@@ -76,25 +76,20 @@ export class BestBuyService {
       url.searchParams.append('format', 'json');
 
       const response = await fetch(url.toString());
-
-      if (response.status === 404) {
-        return null;
-      }
-
-      if (!response.ok) {
-        throw new Error(`API call failed: ${response.status}`);
+      const warning = HttpWarningFactory.fromResponse(response, 'Best Buy API');
+      if (warning) {
+        return { warning };
       }
 
       const data = await response.json() as BestBuyProductResponse;
-      return this.mapToProduct(data);
-
+      return { data: this.mapToProduct(data) };
     } catch (error) {
       logger.error(`Error fetching product from Best Buy: ${error}`);
-      throw error;
+      return { warning: HttpWarningFactory.UnknownHttpWarning(500, `Unexpected error: ${error}`) };
     }
   }
 
-  async searchProducts(params: BestBuySearchParams): Promise<Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'>[]> {
+  async searchProducts(params: BestBuySearchParams): Promise<{ data?: Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'>[]; warning?: HttpWarning }> {
     try {
       await this.throttleRequest();
 
@@ -108,22 +103,30 @@ export class BestBuyService {
       if (params.category) url.searchParams.append('categoryPath', params.category);
 
       const response = await fetch(url.toString());
-
-      if (!response.ok) {
-        throw new Error(`API call failed: ${response.status}`);
+      const warning = HttpWarningFactory.fromResponse(response, 'Best Buy API');
+      if (warning) {
+        return { warning };
       }
 
       const data = await response.json() as { products: BestBuyProductResponse[] };
-      return data.products.map(this.mapToProduct);
+      return { data: data.products.map(this.mapToProduct) };
 
     } catch (error) {
       logger.error(`Error searching products from Best Buy: ${error}`);
-      throw error;
+      return { warning: HttpWarningFactory.UnknownHttpWarning(500, `Unexpected error: ${error}`) };
     }
   }
 
-  async getCurrentPrice(sku: string): Promise<number | null> {
-    const product = await this.getProduct(sku);
-    return product ? (product.attributes as any).regularPrice : null;
+  async getCurrentPrice(sku: string): Promise<{ data?: number; warning?: HttpWarning }> {
+    const result = await this.getProduct(sku);
+    if (result.warning) {
+      return { warning: result.warning };
+    }
+
+    if (!result.data) {
+      return { warning: HttpWarningFactory.NotFound('Product not found') };
+    }
+
+    return { data: result.data.attributes.regularPrice };
   }
 }
