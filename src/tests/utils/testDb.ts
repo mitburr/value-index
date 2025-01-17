@@ -34,20 +34,24 @@ export class TestDatabase {
     let files: string[];
 
     try {
-      files = await search.findDirectoryFiles('migrations');
-      logger.list('files found in the migrations directory', files);
-      files.forEach((file) => {
-        migrations.push(fs.readFileSync(file, 'utf8'));
-      });
+        files = await search.findDirectoryFiles('migrations');
 
-      // Execute each migration
-      for (const migration of migrations) {
-        logger.debug(`Executing migration: ${migration.substring(0, 50)}...`);
-        await this.pool.query(migration);
-      }
+        // Sort migrations numerically
+        files.sort((a, b) => {
+          const numA = parseInt(a.match(/\d+/)?.[0] || '0', 10)
+          const numB = parseInt(b.match(/\d+/)?.[0] || '0', 10);
+          return numA - numB;
+        });
 
-      logger.success('Test database ready', 'database');
-    } catch (e) {
+        logger.list('files found in the migrations directory', files);
+
+        // Execute migrations in order
+        for (const file of files) {
+          const migration = fs.readFileSync(file, 'utf8');
+          logger.debug(`Executing migration: ${migration.substring(0, 30)}...`);
+          await this.pool.query(migration);
+        }
+      } catch (e) {
       if (e instanceof FileNotFoundException) {
         logger.error('Directory not found');
       } else {
@@ -62,16 +66,21 @@ export class TestDatabase {
 }
 
   static async cleanup() {
-    if (this.pool) {
-      logger.info('Cleaning up test database', 'database');
-      // Clean up in reverse order of dependencies
-      await this.pool.query('DROP TABLE IF EXISTS price_history');
-      await this.pool.query('DROP TABLE IF EXISTS products');
-      await this.pool.query('DROP TABLE IF EXISTS retailers');
+  if (this.pool) {
+    logger.info('Cleaning up test database', 'database');
+    try {
+      // Drop tables in correct dependency order
+      await this.pool.query('DROP TABLE IF EXISTS price_history CASCADE');
+      await this.pool.query('DROP TABLE IF EXISTS tracked_products CASCADE');
+      await this.pool.query('DROP TABLE IF EXISTS scheduled_jobs CASCADE');
+      await this.pool.query('DROP TABLE IF EXISTS retailers CASCADE');
       await this.pool.end();
-      logger.success('Test database connection closed', 'database');
+      logger.success('Test database cleanup complete', 'database');
+    } catch (error) {
+      logger.error(`Cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+}
 
   static getPool(): Pool {
     if (!this.pool) {

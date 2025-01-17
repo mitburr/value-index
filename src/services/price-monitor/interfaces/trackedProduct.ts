@@ -1,4 +1,4 @@
-type ValidationRule = {
+export type ValidationRule = {
  exactNameMatch?: string;
  priceRange?: {
    min: number;
@@ -8,7 +8,7 @@ type ValidationRule = {
  excludedTerms?: string[];
 };
 
-interface TrackedProduct {
+export interface TrackedProduct {
  id: string;
  sku: string;
  retailerId: string;
