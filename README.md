@@ -27,7 +27,7 @@ The system is composed of independent services:
 │   │   │   ├── interfaces/
 │   │   │   │   └── price.ts
 │   │   │   └── repositories/
-│   │   │       └── prices.ts 
+│   │   │       └── priceRepository.ts 
 │   │   ├── retailer-integration
 │   │   │   ├── implementations/
 │   │   │   │   ├── amazonRetailer.ts
