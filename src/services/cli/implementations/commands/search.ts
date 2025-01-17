@@ -53,39 +53,28 @@ export class SearchCommand implements Command<SearchResult[]> {
 
   async execute(...args: string[]): Promise<CommandResult<SearchResult[]>> {
     try {
-      const options = this.parseFlags(args);
-      const query = options.query.join(' ');
+        const options = this.parseFlags(args);
+        const query = options.query.join(' ');
+        const results: SearchResult[] = [];
 
-      const targetRetailers = options.retailer
-        ? [[options.retailer, this.retailers.get(options.retailer)]]
-        : Array.from(this.retailers.entries());
-      const results: SearchResult[] = [];
+        // Type-safe retailer selection using Map.entries()
+        const targetRetailers = options.retailer
+            ? (this.retailers.has(options.retailer)
+                ? [[options.retailer, this.retailers.get(options.retailer)!] as const]
+                : [])
+            : Array.from(this.retailers.entries());
 
-      if (retailerName) {
-            const service = this.retailers.get(retailerName);
-            if (!service) {
-                return {
-                    success: false,
-                    error: `Retailer ${retailerName} not found`
-                };
-            }
-            const response = await service.searchProducts({ query });
+        for (const [name, service] of targetRetailers) {
+            const response = await service.searchProducts({
+                query,
+                pageSize: options.limit
+            });
+
             if (response.data) {
                 results.push({
-                    retailer: retailerName,
+                    retailer: name,
                     products: response.data
                 });
-            }
-        } else {
-            // Handle all retailers
-            for (const [name, service] of this.retailers) {
-                const response = await service.searchProducts({ query });
-                if (response.data) {
-                    results.push({
-                        retailer: name,
-                        products: response.data
-                    });
-                }
             }
         }
 
