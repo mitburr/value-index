@@ -13,7 +13,7 @@ describe('BestBuy API Integration', () => {
     const config: BestBuyConfig = {
       apiKey: settings.retailers.bestbuy.apiKey,
       baseUrl: 'https://api.bestbuy.com/v1',
-      rateLimit: 5 // Best Buy's default rate limit
+      rateLimit: 3 // Best Buy's default rate limit
     };
 
     if (!config.apiKey) {

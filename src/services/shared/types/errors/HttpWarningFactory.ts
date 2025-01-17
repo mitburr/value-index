@@ -9,7 +9,7 @@ export class HttpWarningFactory {
     return this.create(statusCode, message, code);
   }
 
-  static fromResponse(response: Response, context: string = ''): HttpWarning | null {
+  static checkResponse(response: Response, context: string = ''): HttpWarning | null {
     if (response.ok) return null;
 
     const prefix = context ? `${context}: ` : '';

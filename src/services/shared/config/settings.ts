@@ -59,7 +59,7 @@ export const settings: Settings = {
     bestbuy: {
       apiKey: validateEnvVariable('BESTBUY_API_KEY'),
       baseUrl: validateEnvVariable('BESTBUY_BASE_URL'),
-      rateLimit: 10
+      rateLimit: 3
     }
     // Add your retailer configurations here
   }
