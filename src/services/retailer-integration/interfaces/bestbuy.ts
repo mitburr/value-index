@@ -12,12 +12,6 @@ export interface BestBuyProductResponse {
   onlineAvailability: boolean;
 }
 
-export interface BestBuySearchParams {
-  query?: string;
-  category?: string;
-  page?: number;
-  pageSize?: number;
-}
 
 export interface BestBuyConfig {
   apiKey: string;
