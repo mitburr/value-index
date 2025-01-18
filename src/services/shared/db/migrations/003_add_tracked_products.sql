@@ -3,6 +3,7 @@ CREATE TABLE tracked_products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     sku VARCHAR(50) NOT NULL,
     retailer_id UUID REFERENCES retailers(id),
+    product_id UUID REFERENCES products(id),
     name VARCHAR(255) NOT NULL,
     validation_rules JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

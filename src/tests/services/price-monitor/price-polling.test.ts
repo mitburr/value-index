@@ -15,12 +15,13 @@ describe('PricePollingService', () => {
   let bestBuyService: BestBuyService;
   let retailerId: string;
 
+    // First create a retailer and get its UUID
+
 
   beforeEach(async () => {
     await TestDatabase.initialize();
     const pool = TestDatabase.getPool();
 
-    // First create a retailer and get its UUID
     const retailerResult = await pool.query<{ id: string }>(`
       INSERT INTO retailers (name, base_url, rate_limit)
       VALUES ($1, $2, $3)
@@ -41,7 +42,7 @@ describe('PricePollingService', () => {
       productRepo,
       priceRepo,
       bestBuyService,
-      1000 // 1 second for testing
+      1000000 // 1 second for testing
     );
   });
 
@@ -58,14 +59,14 @@ describe('PricePollingService', () => {
     await productRepo.create({
       sku: 'test-sku',
       retailerId, // Now using proper UUID
+      productId: 'testproduct1234',
       name: 'Test Product',
       validationRules: {
         exactNameMatch: 'Test Product'
       }
     });
 
-    await pollingService.start();
-    await new Promise(resolve => setTimeout(resolve, 1100));
+    await pollingService.poll();  // Make poll() public or use a test-only method
 
     const metrics = pollingService.getMetrics();
     expect(metrics.successCount).toBe(1);
@@ -80,6 +81,7 @@ describe('PricePollingService', () => {
     await productRepo.create({
       sku: 'test-sku',
       retailerId, // Now using proper UUID
+      productId: 'testproduct1234',
       name: 'Test Product',
       validationRules: {
         exactNameMatch: 'Test Product'

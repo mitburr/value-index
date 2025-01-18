@@ -12,6 +12,7 @@ export interface TrackedProduct {
  id: string;
  sku: string;
  retailerId: string;
+ productId: string,
  name: string;
  // Using discriminated union pattern for validation
  validationRules: ValidationRule;
