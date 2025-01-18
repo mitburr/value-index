@@ -8,7 +8,6 @@ Mostly a coding exercise for me.
 The system is composed of independent services:
 - **Price Monitor**: Tracks product price changes
 - **Retailer Integration**: Manages connections to retail platforms
-- **Value Analysis**: Analyzes price trends and value metrics
 - **Shared**: Common utilities and configurations
 
 # Project Structure
