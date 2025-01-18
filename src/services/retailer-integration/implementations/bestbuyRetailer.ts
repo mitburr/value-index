@@ -1,6 +1,6 @@
 import { RetailerService } from '../interfaces/retailerService';
 import { Product } from '../interfaces/product';
-import { BestBuyProductResponse, BestBuySearchParams, BestBuyConfig } from '../interfaces/bestbuy';
+import { BestBuyProductResponse, BestBuyConfig } from '../interfaces/bestbuy';
 import { logger } from 'u/logger';
 import { HttpWarning, HttpWarningFactory } from 'services/shared/types';
 
@@ -10,9 +10,15 @@ export class BestBuyService implements RetailerService {
   private requestQueue: (() => Promise<any>)[] = [];
   private isProcessingQueue = false;
   private readonly requestDelay = 3000;
+  private readonly _retailerId: string;
 
-  constructor(private config: BestBuyConfig) {
+  constructor(private config: BestBuyConfig, retailerId: string) {
+    this._retailerId = retailerId;
     logger.info('BestBuy service initialized with 5 second request delay');
+  }
+
+  get retailerId(): string {
+    return this._retailerId;
   }
 
   private mapToProduct(bestbuyProduct: BestBuyProductResponse): Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'> {

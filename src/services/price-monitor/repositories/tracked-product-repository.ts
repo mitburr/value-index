@@ -75,4 +75,15 @@ export class TrackedProductRepository {
   private toSnakeCase(str: string): string {
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
   }
+
+  async findById(id: string): Promise<TrackedProduct | null> {
+  const query = `
+    SELECT * FROM tracked_products
+    WHERE id = $1
+    LIMIT 1
+  `;
+
+  const result = await this.pool.query<TrackedProduct>(query, [id]);
+  return result.rows[0] ? this.mapFromDb(result.rows[0]) : null;
+}
 }
