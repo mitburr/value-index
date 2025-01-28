@@ -27,11 +27,8 @@ export class SearchCommand implements Command<SearchResult[]> {
           break;
         case '-p':
           i++;
-          // Collect all terms until next flag or end
-          while (i < args.length && !args[i].startsWith('-')) {
-            options.query.push(args[i++]);
-          }
-          continue;
+          options.query = args.slice(i);
+          return options;  // Return immediately as we've captured all remaining terms
         default:
           throw new Error(`Unknown flag: ${args[i]}`);
       }

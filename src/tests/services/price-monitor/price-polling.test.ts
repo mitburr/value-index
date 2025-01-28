@@ -15,9 +15,6 @@ describe('PricePollingService', () => {
   let bestBuyService: BestBuyService;
   let retailerId: string;
 
-    // First create a retailer and get its UUID
-
-
   beforeEach(async () => {
     await TestDatabase.initialize();
     const pool = TestDatabase.getPool();
@@ -35,14 +32,15 @@ describe('PricePollingService', () => {
     bestBuyService = new BestBuyService({
       apiKey: 'test-key',
       baseUrl: 'test-url',
-      rateLimit: 60
-    }, retailerId);
+      rateLimit: 60,
+      retailerId: retailerId
+    });
 
     pollingService = new PricePollingService(
       productRepo,
       priceRepo,
       bestBuyService,
-      1000000 // 1 second for testing
+      1000000 // Very long interval to prevent second poll
     );
   });
 
@@ -52,13 +50,14 @@ describe('PricePollingService', () => {
   });
 
   test('should poll prices for tracked products', async () => {
-    bestBuyService.getCurrentPrice = mock(async () => ({
+    // Mock should expect the SKU format from BestBuyService
+    bestBuyService.getCurrentPrice = mock(async (sku: string) => ({
       data: 999.99
     }));
 
     await productRepo.create({
       sku: 'test-sku',
-      retailerId, // Now using proper UUID
+      retailerId,
       productId: 'testproduct1234',
       name: 'Test Product',
       validationRules: {
@@ -66,7 +65,7 @@ describe('PricePollingService', () => {
       }
     });
 
-    await pollingService.poll();  // Make poll() public or use a test-only method
+    await pollingService.poll();
 
     const metrics = pollingService.getMetrics();
     expect(metrics.successCount).toBe(1);
@@ -74,13 +73,13 @@ describe('PricePollingService', () => {
   });
 
   test('should handle errors gracefully', async () => {
-    bestBuyService.getCurrentPrice = mock(async () => ({
+    bestBuyService.getCurrentPrice = mock(async (sku: string) => ({
       warning: HttpWarningFactory.UnknownHttpWarning(500, 'Test error')
     }));
 
     await productRepo.create({
       sku: 'test-sku',
-      retailerId, // Now using proper UUID
+      retailerId,
       productId: 'testproduct1234',
       name: 'Test Product',
       validationRules: {
