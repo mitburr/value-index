@@ -11,6 +11,7 @@ The system consists of several integrated services:
 - **Retailer Integration**: Best Buy API integration with rate limiting
 - **Shared**: Common utilities, database migrations, and configurations
 
+
 ## Key Features
 - Direct Best Buy product search by SKU
 - Automated price tracking with configurable intervals
@@ -216,4 +217,3 @@ Best practices:
 2. Include relevant context
 3. Structure data for readability
 4. Use sections for process flows
-
