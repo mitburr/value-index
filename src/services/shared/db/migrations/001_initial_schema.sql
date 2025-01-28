@@ -1,6 +1,3 @@
--- Enable UUID generation
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Create retailers table
 CREATE TABLE retailers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

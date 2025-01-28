@@ -1,6 +1,6 @@
 import { RetailerService } from '../interfaces/retailerService';
 import { Product } from '../interfaces/product';
-import { BestBuyProductResponse, BestBuySearchParams, BestBuyConfig } from '../interfaces/bestbuy';
+import { BestBuyProductResponse, BestBuyConfig } from '../interfaces/bestbuy';
 import { logger } from 'u/logger';
 import { HttpWarning, HttpWarningFactory } from 'services/shared/types';
 
@@ -10,9 +10,15 @@ export class BestBuyService implements RetailerService {
   private requestQueue: (() => Promise<any>)[] = [];
   private isProcessingQueue = false;
   private readonly requestDelay = 3000;
+  private readonly _retailerId: string;
 
   constructor(private config: BestBuyConfig) {
+    this._retailerId = config.retailerId;  // Get it from config
     logger.info('BestBuy service initialized with 5 second request delay');
+  }
+
+  get retailerId(): string {
+    return this._retailerId;
   }
 
   private mapToProduct(bestbuyProduct: BestBuyProductResponse): Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'> {
@@ -71,9 +77,17 @@ export class BestBuyService implements RetailerService {
   async getProduct(sku: string): ProductResponse<Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'>> {
     return this.queueRequest(async () => {
       try {
-        const url = new URL(`${this.config.baseUrl}/products/${sku}.json`);
+        // Remove sku: prefix if present
+        const cleanSku = sku.replace('sku:', '');
+        const baseUrl = `${this.config.baseUrl}/products(sku=${cleanSku})`;
+
+        const url = new URL(baseUrl);
         url.searchParams.append('apiKey', this.config.apiKey);
         url.searchParams.append('format', 'json');
+        url.searchParams.append('show', 'sku,name,manufacturer,modelNumber,description,image,regularPrice,inStoreAvailability,onlineAvailability,categoryPath');
+
+        const debugUrl = url.toString().replace(this.config.apiKey, 'API_KEY');
+        logger.debug(`Making request to Best Buy API: ${debugUrl}`);
 
         const response = await fetch(url.toString());
         const warning = HttpWarningFactory.checkResponse(response, 'Best Buy API');
@@ -81,8 +95,8 @@ export class BestBuyService implements RetailerService {
           return { warning };
         }
 
-        const data = await response.json() as BestBuyProductResponse;
-        return { data: this.mapToProduct(data) };
+        const data = await response.json() as { products: BestBuyProductResponse[] };
+        return { data: this.mapToProduct(data.products[0]) };
       } catch (error) {
         logger.error(`Error fetching product from Best Buy: ${error}`);
         return { warning: HttpWarningFactory.UnknownHttpWarning(500, `Unexpected error: ${error}`) };
@@ -96,10 +110,13 @@ export class BestBuyService implements RetailerService {
       try {
         let baseUrl = `${this.config.baseUrl}/products`;
 
-        if (params.query) {
-          baseUrl += `(search=${params.query})`;
-        } else if (params.category) {
-          baseUrl += `(categoryPath.name="${params.category}")`;
+        if (params.query?.toLowerCase().startsWith('sku:')) {
+            const sku = params.query.split(':')[1].trim();
+            // Direct SKU endpoint
+            baseUrl = `${this.config.baseUrl}/products(sku=${sku})`;
+        } else {
+            // Use more specific search criteria
+            baseUrl = `${this.config.baseUrl}/products(search=${params.query})`;
         }
 
         const url = new URL(baseUrl);
@@ -127,20 +144,17 @@ export class BestBuyService implements RetailerService {
     });
   }
 
-  async getCurrentPrice(sku: string): ProductResponse<number> {
-    const result = await this.getProduct(sku);
+  async getCurrentPrice(sku: string): Promise<{ data?: number; warning?: HttpWarning }> {
+    const formattedSku = sku.startsWith('sku:') ? sku : `sku:${sku}`;
+    const result = await this.getProduct(formattedSku);
     if (result.warning) {
-      return { warning: result.warning };
+      return {warning: result.warning};
     }
 
     if (!result.data) {
-      return { warning: HttpWarningFactory.NotFound('Product not found') };
+      return {warning: HttpWarningFactory.NotFound('Product not found')};
     }
 
-    return { data: result.data.attributes.regularPrice };
-  }
-
-  get queueLength(): number {
-    return this.requestQueue.length;
+    return {data: result.data.attributes.regularPrice};
   }
 }

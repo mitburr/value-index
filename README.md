@@ -1,91 +1,31 @@
 # Value Index 
 
 A price tracking and analysis system built with TypeScript and microservices.
-Mostly a coding exercise for me. 
+Currently supports Best Buy product tracking with real-time price monitoring.
 
 ## Architecture Overview
 
-The system is composed of independent services:
-- **Price Monitor**: Tracks product price changes
-- **Retailer Integration**: Manages connections to retail platforms
-- **Shared**: Common utilities and configurations
+The system consists of several integrated services:
+- **CLI Service**: Interactive command-line interface for product search and management
+- **Price Monitor**: Automated price tracking and history recording
+- **Retailer Integration**: Best Buy API integration with rate limiting
+- **Shared**: Common utilities, database migrations, and configurations
 
-# Project Structure
-```bash
-├── README.md
-├── bun.lockb
-├── package.json
-├── src
-│   ├── index.ts
-│   ├── services
-│   │   ├── cache.ts
-│   │   ├── notification
-│   │   │   ├── interfaces/
-│   │   │   └── providers/
-│   │   ├── price-monitor
-│   │   │   ├── interfaces/
-│   │   │   │   └── price.ts
-│   │   │   └── repositories/
-│   │   │       └── prices.ts 
-│   │   ├── retailer-integration
-│   │   │   ├── implementations/
-│   │   │   │   ├── amazonRetailer.ts
-│   │   │   │   └── walmartRetailer.ts
-│   │   │   ├── interfaces/
-│   │   │   │   ├── product.ts
-│   │   │   │   └── retailer.ts
-│   │   │   ├── repositories/
-│   │   │   │   ├── product-repository.ts
-│   │   │   │   └── retailers.ts
-│   │   │   └── tests/
-│   │   ├── scheduler.ts
-│   │   ├── shared
-│   │   │   ├── config/
-│   │   │   │   └── settings.ts
-│   │   │   ├── db/
-│   │   │   │   └── migrations/
-│   │   │   │       └── 001_initial_schema.sql
-│   │   │   ├── interfaces/
-│   │   │   ├── types/
-│   │   │   │   ├── errors.ts
-│   │   │   │   └── index.ts
-│   │   │   └── utils/
-│   │   │       ├── file-name-search.ts
-│   │   │       ├── logger.ts
-│   │   │       ├── reporter.ts
-│   │   │       └── verify-env.ts
-│   │   ├── user-preferences
-│   │   │   ├── interfaces/
-│   │   │   └── repositories/
-│   │   └── value-analysis
-│   │       ├── analyzers/
-│   │       │   └── priceAnalysis.ts
-│   │       └── interfaces/
-│   └── tests
-│       ├── basic.test.ts
-│       ├── db/
-│       │   ├── db.test.ts
-│       │   └── product.test.ts
-│       ├── settings/
-│       │   └── settings.test.ts
-│       └── utils/
-│           └── testDb.ts
-├── tsconfig.json
-├── tslint.json
-└── yarn.lock
-```
 
 ## Key Features
-- Environment-based configuration with `.env` file support
-- Smart file and directory search functionality
-- Comprehensive logging system
+- Direct Best Buy product search by SKU
+- Automated price tracking with configurable intervals
+- Price history recording in PostgreSQL
+- Interactive CLI for product search and management
+- Rate-limited API requests with request queuing
 - Type-safe database operations
-- Automated testing infrastructure
+- Comprehensive logging system
+- Automated testing with mocked and live API calls
 
 ## Prerequisites
 - PostgreSQL 14+
 - Bun 1.1.38+
-- Node.js 18+
+- Best Buy API key
 
 ## Setup
 
@@ -100,7 +40,7 @@ cd value-index
 bun install
 ```
 
-3. Create `.env` file with required variables:
+3. Create `.env` file with required variables (HMU for the BBY Key):
 ```bash
 # Database Configuration
 POSTGRES_USER=postgres
@@ -114,74 +54,166 @@ POSTGRES_TEST_DB=price_tracker_test
 LOG_LEVEL=debug
 LOG_FILE=app.log
 
-# Retailer API Keys
-AMAZON_API_KEY=your_key
-AMAZON_BASE_URL=api_url
-AMAZON_RATE_LIMIT=60
-
-WALMART_API_KEY=your_key
-WALMART_BASE_URL=api_url
-WALMART_RATE_LIMIT=60
+# Best Buy API Configuration
+BESTBUY_API_KEY=your_key
+BESTBUY_BASE_URL=https://api.bestbuy.com/v1
+BESTBUY_RETAILER_ID=your_retailer_uuid
 ```
 
-4. Set up database:
+4. Initialize database and create retailer:
 ```bash
-chmod +x scripts/db-setup.sh
-./scripts/db-setup.sh
+bun run scripts/setup-db.ts
+```
+
+## Usage
+
+### Starting the Price Tracking Server
+```bash
+bun run src/server.ts
+```
+
+### Using the CLI
+```bash
+bun run src/services/cli/index.ts
+
+# Search for a product by SKU
+search -p sku:6525421
+
+# General product search
+search -p "iPhone 15 Pro Max"
+```
+
+### Adding Products to Track
+```bash
+bun run scripts/add-product.ts
 ```
 
 ## Development
 
 ### Running Tests
 ```bash
-bun test                # All tests
-bun test src/services/retailer-integration/tests  # Specific service tests
+# Run all tests
+bun test
+
+# Run specific test suites
+bun test src/tests/services/price-monitor/price-polling.test.ts
+bun test src/tests/services/retailer-integration/integration-tests/bestBuyService.test.ts
 ```
 
-### Utility Features
+### Project Structure
+The project follows a microservices architecture with clear separation of concerns:
+- `/services/cli`: Command-line interface implementation
+- `/services/price-monitor`: Price tracking and recording
+- `/services/retailer-integration`: Retailer API integrations
+- `/services/shared`: Common utilities and configurations
+- `/scripts`: Database setup and product management
+- `/tests`: Unit and integration tests
 
-#### Search Service
-The search utility provides file and directory search functionality:
-```typescript
-import { search } from 'u/file-name-search';
+## Current Status
+- ✅ Best Buy API integration
+- ✅ Product price tracking
+- ✅ CLI interface
+- ✅ Price history recording
+- 🚧 Price analysis tools (in development)
+- 🚧 Additional retailer support (planned)
 
-// Find a specific file
-const envPath = await search.findFile('.env');
+## How It Works: Adding a Product
 
-// Find all files in a directory
-const migrations = await search.findDirectoryFiles('migrations');
-```
+Here's a detailed walkthrough of how the application tracks product prices:
 
-#### Environment Verification
-```typescript
-import { verifyEnv } from '../utils/verify-env';
+1. **Adding a Product to Track**
+   ```typescript
+   // Using scripts/add-product.ts
+   const product = await productRepo.create({
+     sku: '6525421',  // Best Buy SKU
+     retailerId: settings.retailers.bestbuy.retailerId,
+     name: 'iPhone 15 Pro Max',
+     validationRules: {
+       exactNameMatch: 'iPhone 15 Pro Max',
+       priceRange: { min: 900, max: 1500 }
+     }
+   });
+   ```
+   This creates records in both `products` and `tracked_products` tables.
 
-// Verifies all required environment variables are present
-verifyEnv();
-```
+2. **Price Tracking Flow**
+   When the server starts (`src/server.ts`), the following happens:
+   ```typescript
+   // 1. Price polling service initializes
+   const pollingService = new PricePollingService(
+     productRepo,
+     priceRepo,
+     bestBuyService
+   );
 
-#### Logging
+   // 2. Polling begins at configured interval
+   await pollingService.start();
+   ```
+
+   For each poll:
+   - Finds all tracked products for the retailer
+   - Queries Best Buy API for current prices
+   - Records prices in `price_history` table
+   - Updates metrics for monitoring
+
+3. **Data Model Relationships**
+   ```
+   retailers
+     ↓
+   products ← tracked_products
+     ↓
+   price_history
+   ```
+   - `retailers`: Stores API credentials and rate limits
+   - `products`: Base product information
+   - `tracked_products`: Products we're actively monitoring
+   - `price_history`: Historical price data
+
+## Contributing
+
+### Using the Logger
+
+The logger provides structured, consistent logging across the application:
+
 ```typescript
 import { logger } from 'u/logger';
 
-logger.info('Operation successful');
-logger.error('Operation failed');
-logger.startSection('Starting process');
-logger.endSection('Process complete');
+// Basic logging with emoji indicators
+logger.info('Operation started');  // ℹ️ Operation started
+logger.error('Failed to connect'); // ❌ Failed to connect
+logger.success('Data saved');      // ✅ Data saved
+
+// Section logging for process flows
+logger.startSection('Price Update');  // 🚀 === Starting: Price Update ===
+logger.endSection('Price Update');    // 🏁 === Completed: Price Update ===
+
+// Debug logging with context
+logger.debug(`Processing SKU: ${sku}`, 'database');
+
+// Structured data logging
+logger.list('Found products', products, 'info', 'database');
+
+// Common logging patterns
+logger.info(`Added request to queue. Length: ${length}`);
+logger.error(`API error: ${error.message}`);
+logger.success('Successfully recorded price', 'database');
 ```
 
-## Testing
-The project includes comprehensive test coverage:
-- Database connection and operations
-- Repository CRUD operations
-- Configuration validation
-- Error handling
+Logger features:
+- Emoji indicators for log types
+- Timestamp prefixing
+- Optional context prefixes
+- Structured data formatting
+- Color coding by level
+- File and console output
 
-Tests use a separate test database and clean up after themselves.
-
-## Contributing
-1. Follow the established directory structure
-2. Add tests for new functionality
-3. Use the provided utilities for consistency
-4. Update appropriate interfaces and types
-5. Ensure all tests pass before submitting changes
+Best practices:
+1. Use appropriate log levels:
+   - `debug`: Detailed flow information
+   - `info`: Normal operations
+   - `warn`: Handled issues
+   - `error`: Failures and exceptions
+   - `success`: Completed operations
+2. Include relevant context
+3. Structure data for readability
+4. Use sections for process flows

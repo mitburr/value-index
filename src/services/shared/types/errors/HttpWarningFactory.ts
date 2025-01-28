@@ -5,11 +5,11 @@ export class HttpWarningFactory {
    return new HttpWarning(statusCode, message, code);
  }
 
-   static UnknownHttpWarning(statusCode: number, message: string, code?: string): HttpWarning {
+ static UnknownHttpWarning(statusCode: number, message: string, code?: string): HttpWarning {
     return this.create(statusCode, message, code);
   }
 
-  static checkResponse(response: Response, context: string = ''): HttpWarning | null {
+ static checkResponse(response: Response, context: string = ''): HttpWarning | null {
     if (response.ok) return null;
 
     const prefix = context ? `${context}: ` : '';
