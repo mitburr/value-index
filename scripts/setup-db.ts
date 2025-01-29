@@ -51,34 +51,32 @@ async function setupDatabase() {
             logger.info(`Executed migration: ${migration}`);
         }
 
-        // Insert retailer
+        // Insert default retailers
         const result = await pool.query(`
             INSERT INTO retailers (name, base_url, rate_limit)
             VALUES ($1, $2, $3)
             ON CONFLICT (name) DO UPDATE 
-            SET base_url = $2, rate_limit = $3
-            RETURNING id
-        `, ['Best Buy', 'https://api.bestbuy.com/v1', 60]);
+            SET base_url = EXCLUDED.base_url,
+                rate_limit = EXCLUDED.rate_limit,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id, name
+        `, [
+            'Best Buy',
+            settings.retailers.bestbuy.baseUrl,
+            settings.retailers.bestbuy.rateLimit
+        ]);
 
-        const retailerId = result.rows[0].id;
-        logger.success(`Retailer created/updated with ID: ${retailerId}`);
+        const retailer = result.rows[0];
+        logger.success(`Retailer ${retailer.name} configured with ID: ${retailer.id}`);
 
-        // Update .env file
-        const envPath = path.join(__dirname, '../.env');
-        let envContent = fs.readFileSync(envPath, 'utf8');
+        // Insert any other necessary seed data here
+        // ...
 
-        if (envContent.includes('BESTBUY_RETAILER_ID=')) {
-            envContent = envContent.replace(
-                /BESTBUY_RETAILER_ID=.*/,
-                `BESTBUY_RETAILER_ID=${retailerId}`
-            );
-        } else {
-            envContent += `\nBESTBUY_RETAILER_ID=${retailerId}\n`;
-        }
+        logger.success('Database setup completed successfully');
 
-        fs.writeFileSync(envPath, envContent);
-        logger.success('Updated .env file with retailer ID');
-
+    } catch (error) {
+        logger.error(`Database setup failed: ${error instanceof Error ? error.message : String(error)}`);
+        throw error;
     } finally {
         await pool.end();
     }

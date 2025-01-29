@@ -26,6 +26,7 @@ The system consists of several integrated services:
 - PostgreSQL 14+
 - Bun 1.1.38+
 - Best Buy API key
+- Docker and Docker compose (for containerized deployment)
 
 ## Setup
 
@@ -57,7 +58,6 @@ LOG_FILE=app.log
 # Best Buy API Configuration
 BESTBUY_API_KEY=your_key
 BESTBUY_BASE_URL=https://api.bestbuy.com/v1
-BESTBUY_RETAILER_ID=your_retailer_uuid
 ```
 
 4. Initialize database and create retailer:
@@ -85,7 +85,7 @@ search -p "iPhone 15 Pro Max"
 
 ### Adding Products to Track
 ```bash
-bun run scripts/add-product.ts
+bun run scripts/add-products.ts
 ```
 
 ## Development
@@ -123,7 +123,7 @@ Here's a detailed walkthrough of how the application tracks product prices:
 
 1. **Adding a Product to Track**
    ```typescript
-   // Using scripts/add-product.ts
+   // Using scripts/add-products.ts
    const product = await productRepo.create({
      sku: '6525421',  // Best Buy SKU
      retailerId: settings.retailers.bestbuy.retailerId,
@@ -281,4 +281,89 @@ The test suite follows a structured organization:
 ```
 
 The tests are organized by domain and split between unit tests and integration tests where appropriate. Integration tests that interact with external APIs (like Best Buy) are kept separate from unit tests to maintain test isolation and reliability.
+```
+
+## Deployment
+### Docker Deployment
+The application can be deployed using Docker for consistent environments and easy management:
+
+1. Ensure Docker and Docker Compose are installed:
+```bash
+# Arch Linux
+sudo pacman -S docker docker-compose
+
+# Enable and start Docker service
+sudo systemctl enable docker
+sudo systemctl start docker
+```
+
+2. Build and start containers:
+```bash
+# From project root
+sudo docker compose -f docker/docker-compose.yml up -d --build
+```
+
+3. Check container status:
+```bash
+sudo docker compose -f docker/docker-compose.yml ps
+```
+
+4. View logs:
+```bash
+sudo docker compose -f docker/docker-compose.yml logs -f
+```
+
+### Automatic Startup
+To configure the application to start automatically on system boot:
+
+1. Create systemd service:
+```bash
+sudo nano /etc/systemd/system/value-index.service
+```
+
+2. Add service configuration:
+```ini
+[Unit]
+Description=Value Index Price Tracker
+After=docker.service network-online.target
+Requires=docker.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/path/to/value-index
+ExecStart=/usr/bin/docker compose -f docker/docker-compose.yml up -d
+ExecStop=/usr/bin/docker compose -f docker/docker-compose.yml down
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. Enable and start the service:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable value-index
+sudo systemctl start value-index
+```
+
+4. Check service status:
+```bash
+sudo systemctl status value-index
+```
+
+### Database Management
+Connect to the database in the container:
+```bash
+# Connect to PostgreSQL
+sudo docker compose -f docker/docker-compose.yml exec db psql -U your_username -d price_tracker
+
+# Common commands inside psql:
+\dt                    # List tables
+\d table_name         # Describe table
+SELECT * FROM retailers;   # Query retailers
+SELECT * FROM tracked_products;  # Query tracked products
 ```

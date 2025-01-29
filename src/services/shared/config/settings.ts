@@ -21,7 +21,6 @@ interface Settings {
     apiKey: string;
     baseUrl: string;
     rateLimit: number;
-    retailerId: string;
   }>;
 }
 
@@ -61,7 +60,6 @@ export const settings: Settings = {
       apiKey: validateEnvVariable('BESTBUY_API_KEY'),
       baseUrl: validateEnvVariable('BESTBUY_BASE_URL'),
       rateLimit: 3,
-      retailerId: validateEnvVariable('BESTBUY_RETAILER_ID')
     }
     // Add your retailer configurations here
   }
