@@ -6,28 +6,25 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 async function findRootEnvFile(): Promise<string> {
-  // Get the directory of the current file
   const currentDir = dirname(fileURLToPath(import.meta.url));
-
-  // Navigate up to the project root (3 levels up from src/services/shared/utils)
   const projectRoot = join(currentDir, '..', '..', '..', '..');
-
-  // Return the path to the root .env file
   return join(projectRoot, '.env');
 }
 
-export async function verifyEnv(): Promise<void> {
+export async function verifyEnv(skipFileLoad = false): Promise<void> {
   try {
-    const envPath = await findRootEnvFile();
-    logger.info(`Using .env file at: ${envPath}`);
+    if (!skipFileLoad) {
+      const envPath = await findRootEnvFile();
+      logger.info(`Using .env file at: ${envPath}`);
 
-    const result = config({
-      path: envPath
-    });
+      const result = config({
+        path: envPath
+      });
 
-    if (result.error) {
-      logger.error('Failed to load .env file');
-      throw result.error;
+      if (result.error) {
+        logger.error('Failed to load .env file');
+        throw result.error;
+      }
     }
 
     const requiredVars = [

@@ -18,4 +18,4 @@ RUN mkdir -p logs
 ENV NODE_ENV=production
 
 # Run database migrations, add product, and start the application
-CMD ["sh", "-c", "bun run scripts/setup-db.ts && bun run scripts/add-product.ts && bun run src/server.ts"]
+CMD ["sh", "-c", "bun run scripts/setup-db.ts && bun run scripts/add-products.ts && bun run src/server.ts"]

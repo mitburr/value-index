@@ -85,7 +85,7 @@ search -p "iPhone 15 Pro Max"
 
 ### Adding Products to Track
 ```bash
-bun run scripts/add-product.ts
+bun run scripts/add-products.ts
 ```
 
 ## Development
@@ -123,7 +123,7 @@ Here's a detailed walkthrough of how the application tracks product prices:
 
 1. **Adding a Product to Track**
    ```typescript
-   // Using scripts/add-product.ts
+   // Using scripts/add-products.ts
    const product = await productRepo.create({
      sku: '6525421',  // Best Buy SKU
      retailerId: settings.retailers.bestbuy.retailerId,

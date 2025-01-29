@@ -7,10 +7,11 @@
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "clean": "rm -rf dist",
-    // Individual test files
+    // Basic tests
     "test:basic": "bun test basic.test.ts",
     "test:settings": "bun test settings/settings.test.ts",
     "test:retailer": "bun test retailer.test.ts",
+    "test:scripts": "bun test scripts/",
 
     // Database tests
     "test:db": "bun test db/db.test.ts db/product.test.ts",
