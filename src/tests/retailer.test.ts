@@ -29,11 +29,15 @@ describe('BestBuy API Integration', () => {
     const sku = '6487433'; // iPhone 14 Pro Max
     const product = await service.getProduct(sku);
 
-    logger.info(`Retrieved product: ${product}`);
+    logger.info(`Retrieved product: ${JSON.stringify(product)}`);
 
-    expect(product).not.toBeNull();
-    expect(product?.name).toContain('iPhone');
-    expect(product?.attributes.regularPrice).toBeGreaterThan(0);
+    expect(product.warning).toBeUndefined();
+
+    expect(product.data).toBeDefined();
+
+    expect(product.data?.name).toContain('iPhone');
+
+    expect(product.data?.attributes.regularPrice).toBeGreaterThan(0);
   });
 
   test('should handle non-existent product gracefully', async () => {

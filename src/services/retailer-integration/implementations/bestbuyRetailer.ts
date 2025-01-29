@@ -1,6 +1,6 @@
 import { RetailerService } from '../interfaces/retailerService';
 import { Product } from '../interfaces/product';
-import { BestBuyProductResponse, BestBuyConfig } from '../interfaces/bestbuy';
+import {BestBuyProductResponse, BestBuyConfig, BestBuyApiSearchResponse} from '../interfaces/bestbuy';
 import { logger } from 'u/logger';
 import { HttpWarning, HttpWarningFactory } from 'services/shared/types';
 
@@ -75,34 +75,38 @@ export class BestBuyService implements RetailerService {
   }
 
   async getProduct(sku: string): ProductResponse<Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'>> {
-    return this.queueRequest(async () => {
-      try {
-        // Remove sku: prefix if present
-        const cleanSku = sku.replace('sku:', '');
-        const baseUrl = `${this.config.baseUrl}/products(sku=${cleanSku})`;
+  return this.queueRequest(async () => {
+    try {
+      const cleanSku = sku.replace('sku:', '');
+      const baseUrl = `${this.config.baseUrl}/products(sku=${cleanSku})`;
 
-        const url = new URL(baseUrl);
-        url.searchParams.append('apiKey', this.config.apiKey);
-        url.searchParams.append('format', 'json');
-        url.searchParams.append('show', 'sku,name,manufacturer,modelNumber,description,image,regularPrice,inStoreAvailability,onlineAvailability,categoryPath');
+      const url = new URL(baseUrl);
+      url.searchParams.append('apiKey', this.config.apiKey);
+      url.searchParams.append('format', 'json');
+      url.searchParams.append('show', 'sku,name,manufacturer,modelNumber,description,image,regularPrice,inStoreAvailability,onlineAvailability,categoryPath');
 
-        const debugUrl = url.toString().replace(this.config.apiKey, 'API_KEY');
-        logger.debug(`Making request to Best Buy API: ${debugUrl}`);
+      const debugUrl = url.toString().replace(this.config.apiKey, 'API_KEY');
+      logger.debug(`Making request to Best Buy API: ${debugUrl}`);
 
-        const response = await fetch(url.toString());
-        const warning = HttpWarningFactory.checkResponse(response, 'Best Buy API');
-        if (warning) {
-          return { warning };
-        }
-
-        const data = await response.json() as { products: BestBuyProductResponse[] };
-        return { data: this.mapToProduct(data.products[0]) };
-      } catch (error) {
-        logger.error(`Error fetching product from Best Buy: ${error}`);
-        return { warning: HttpWarningFactory.UnknownHttpWarning(500, `Unexpected error: ${error}`) };
+      const response = await fetch(url.toString());
+      const warning = HttpWarningFactory.checkResponse(response, 'Best Buy API');
+      if (warning) {
+        return { warning };
       }
-    });
-  }
+
+      const data = await response.json() as BestBuyApiSearchResponse;
+
+      if (!data.products || data.products.length === 0) {
+        return { warning: HttpWarningFactory.NotFound('Product not found') };
+      }
+
+      return { data: this.mapToProduct(data.products[0]) };
+    } catch (error) {
+      logger.error(`Error fetching product from Best Buy: ${error}`);
+      return { warning: HttpWarningFactory.UnknownHttpWarning(500, `Unexpected error: ${error}`) };
+    }
+  });
+}
 
   async searchProducts(params: { query?: string; category?: string; pageSize?: number; page?: number }):
     ProductResponse<Omit<Product, 'id' | 'retailerId' | 'createdAt' | 'updatedAt'>[]> {

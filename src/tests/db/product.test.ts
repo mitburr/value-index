@@ -63,7 +63,7 @@ describe("ProductRepository", () => {
   test("should handle duplicate external IDs", async () => {
     const product: CreateProductInput = {
       retailerId,
-      externalId: "DUPLICATE",
+      externalId: "6525421",
       name: "Test Product",
       category: "Test Category",
       attributes: { color: "blue" },

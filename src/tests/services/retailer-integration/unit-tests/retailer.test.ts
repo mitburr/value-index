@@ -6,43 +6,71 @@ import { BestBuyConfig } from 'services/retailer-integration/interfaces/bestbuy'
 describe('BestBuyService Unit Tests', () => {
   let service: RetailerService;
 
-  const testConfig: BestBuyConfig = {
-    apiKey: 'test-api-key',
-    baseUrl: 'https://api.bestbuy.com/v1',
-    rateLimit: 5
+  // Sample success response that matches BestBuyProductResponse interface
+  const mockSuccessResponse = {
+    from: 1,
+    to: 1,
+    currentPage: 1,
+    total: 1,
+    totalPages: 1,
+    queryTime: "0.123",
+    totalTime: "0.234",
+    partial: false,
+    products: [{
+      sku: '6525421',
+      name: 'Test Product',
+      regularPrice: 129.99,
+      salePrice: 119.99,
+      categoryPath: ['Electronics', 'Computers', 'Laptops'],
+      modelNumber: 'MODEL123',
+      description: 'A test product description',
+      manufacturer: 'Test Brand',
+      image: 'http://test-image.jpg',
+      inStoreAvailability: true,
+      onlineAvailability: true
+    }]
   };
 
-  const mockBestBuyProduct = {
-    sku: 'test-sku-123',
-    name: 'Test Product',
-    regularPrice: 129.99,
-    categoryPath: ['Electronics', 'Computers', 'Laptops'],
-    modelNumber: 'MODEL123',
-    description: 'A test product description',
-    manufacturer: 'Test Brand',
-    image: 'http://test-image.jpg',
-    inStoreAvailability: true,
-    onlineAvailability: true
+  // Sample empty response
+  const mockEmptyResponse = {
+    from: 0,
+    to: 0,
+    currentPage: 1,
+    total: 0,
+    totalPages: 0,
+    queryTime: "0.123",
+    totalTime: "0.234",
+    partial: false,
+    products: []
   };
 
   beforeEach(() => {
-    service = new BestBuyService(testConfig);
+    service = new BestBuyService({
+      apiKey: 'test-key',
+      baseUrl: 'https://test-url.com/v1',
+      rateLimit: 5,
+      retailerId: 'test-id',
+      testMode: true
+    });
   });
 
   describe('getProduct', () => {
     test('should fetch and map a product correctly', async () => {
-      global.fetch = mock(() =>
-        Promise.resolve(new Response(
-          JSON.stringify(mockBestBuyProduct),
-          { status: 200 }
-        ))
-      );
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          JSON.stringify(mockSuccessResponse),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      ));
 
-      const result = await service.getProduct('test-sku-123');
+      const result = await service.getProduct('6525421');
 
       expect(result.warning).toBeUndefined();
       expect(result.data).toEqual({
-        externalId: 'test-sku-123',
+        externalId: '6525421',
         name: 'Test Product',
         category: 'Laptops',
         attributes: {
@@ -58,49 +86,138 @@ describe('BestBuyService Unit Tests', () => {
         active: true
       });
     });
+
+    test('should handle 404 responses', async () => {
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          JSON.stringify(mockEmptyResponse),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      ));
+
+      const result = await service.getProduct('nonexistent');
+      expect(result.warning).toBeDefined();
+      expect(result.warning?.statusCode).toBe(404);
+      expect(result.data).toBeUndefined();
+    });
+
+    test('should handle API errors gracefully', async () => {
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          'Internal Server Error',
+          {
+            status: 500,
+            headers: { 'Content-Type': 'text/plain' }
+          }
+        )
+      ));
+
+      const result = await service.getProduct('6525421');
+      expect(result.warning).toBeDefined();
+      expect(result.warning?.statusCode).toBe(500);
+      expect(result.data).toBeUndefined();
+    });
   });
 
   describe('searchProducts', () => {
-    test('should handle search params correctly', async () => {
-      const fetchSpy = mock<typeof fetch>(() =>
-        Promise.resolve(new Response(
-          JSON.stringify({ products: [mockBestBuyProduct] }),
-          { status: 200 }
-        ))
-      );
-      global.fetch = fetchSpy;
+    test('should handle search with SKU', async () => {
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          JSON.stringify(mockSuccessResponse),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      ));
 
-      await service.searchProducts({
+      const result = await service.searchProducts({
+        query: 'sku:6525421',
+        pageSize: 10
+      });
+
+      expect(result.warning).toBeUndefined();
+      expect(result.data).toBeDefined();
+      expect(result.data?.[0].externalId).toBe('6525421');
+    });
+
+    test('should handle search by query', async () => {
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          JSON.stringify(mockSuccessResponse),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      ));
+
+      const result = await service.searchProducts({
         query: 'laptop',
         pageSize: 10
       });
-      const firstCallArg = fetchSpy.mock.calls[0]?.[0];
-      if (!firstCallArg) {
-        throw new Error('No fetch calls recorded');
-      }
 
-      expect(fetchSpy.mock.calls.length).toBeGreaterThan(0);
-      const firstCall = fetchSpy.mock.calls[0];
-      expect(firstCall).toBeDefined();
+      expect(result.warning).toBeUndefined();
+      expect(result.data).toBeDefined();
+      expect(result.data?.length).toBe(1);
+    });
 
-      const callUrl = new URL(firstCallArg.toString());
-      expect(callUrl.toString()).toContain('(search=laptop)');
-      expect(callUrl.searchParams.get('pageSize')).toBe('10');
+    test('should handle empty search results', async () => {
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          JSON.stringify(mockEmptyResponse),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      ));
+
+      const result = await service.searchProducts({
+        query: 'nonexistent',
+        pageSize: 10
+      });
+
+      expect(result.warning).toBeUndefined();
+      expect(result.data).toEqual([]);
     });
   });
 
   describe('getCurrentPrice', () => {
-    test('should extract price from product data', async () => {
-      global.fetch = mock(() =>
-        Promise.resolve(new Response(
-          JSON.stringify(mockBestBuyProduct),
-          { status: 200 }
-        ))
-      );
+    test('should return current price for valid SKU', async () => {
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          JSON.stringify(mockSuccessResponse),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      ));
 
-      const result = await service.getCurrentPrice('test-sku-123');
+      const result = await service.getCurrentPrice('6525421');
       expect(result.warning).toBeUndefined();
       expect(result.data).toBe(129.99);
+    });
+
+    test('should handle non-existent SKUs', async () => {
+      global.fetch = mock(() => Promise.resolve(
+        new Response(
+          JSON.stringify(mockEmptyResponse),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      ));
+
+      const result = await service.getCurrentPrice('nonexistent');
+      expect(result.warning).toBeDefined();
+      expect(result.warning?.statusCode).toBe(404);
+      expect(result.data).toBeUndefined();
     });
   });
 

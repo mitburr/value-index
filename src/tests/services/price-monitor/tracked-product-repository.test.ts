@@ -51,6 +51,7 @@ describe("TrackedProductRepository", () => {
       sku: "6525421",
       retailerId,
       name: "iPhone 15 Pro Max",
+      productId: '',
       validationRules: testValidationRules
     });
 
@@ -63,6 +64,7 @@ describe("TrackedProductRepository", () => {
       sku: "6525421",
       retailerId,
       name: "iPhone 15 Pro Max",
+      productId: '',
       validationRules: testValidationRules
     });
 
@@ -75,6 +77,7 @@ describe("TrackedProductRepository", () => {
       sku: "6525421",
       retailerId,
       name: "iPhone 15 Pro Max",
+      productId: '',
       validationRules: testValidationRules
     });
 
@@ -90,18 +93,21 @@ describe("TrackedProductRepository", () => {
     expect(updated?.validationRules).toEqual(newRules);
   });
 
+
   test("should find products by retailer", async () => {
     await Promise.all([
       repo.create({
         sku: "6525421",
         retailerId,
         name: "iPhone 15 Pro Max",
+        productId: '',
         validationRules: testValidationRules
       }),
       repo.create({
         sku: "6525422",
         retailerId,
         name: "iPhone 15 Pro",
+        productId: '',
         validationRules: { ...testValidationRules, exactNameMatch: "iPhone 15 Pro" }
       })
     ]);
@@ -109,5 +115,20 @@ describe("TrackedProductRepository", () => {
     const products = await repo.findByRetailerId(retailerId);
     expect(products).toHaveLength(2);
     expect(products[0].validationRules).toBeDefined();
+  });
+
+  // Need to test validation rules in tracked-product-repository.test.ts
+  test("should validate price ranges", async () => {
+    const product = await repo.create({
+      sku: "6525421",
+      retailerId,
+      name: "Test Product",
+      productId: '',
+      validationRules: {
+        priceRange: { min: 100, max: 200 }
+      }
+    });
+
+    expect(product.validationRules.priceRange.min).toBe(100);
   });
 });

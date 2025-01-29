@@ -92,9 +92,11 @@ export class TestDatabase {
 
   // Helper method for cleaning test data between tests
   static async cleanTestData() {
-    logger.debug('Cleaning test data', 'database');
-    await this.pool.query('DELETE FROM price_history');
-    await this.pool.query('DELETE FROM products');
-    await this.pool.query('DELETE FROM retailers');
-  }
+  logger.debug('Cleaning test data', 'database');
+  // Order matters - delete child records first
+  await this.pool.query('DELETE FROM price_history');
+  await this.pool.query('DELETE FROM tracked_products');
+  await this.pool.query('DELETE FROM products');
+  await this.pool.query('DELETE FROM retailers');
+}
 }
