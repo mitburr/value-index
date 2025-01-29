@@ -6,12 +6,25 @@ import { TrackedProductRepository } from '../src/services/price-monitor/reposito
 
 async function addTestProduct() {
     const pool = new Pool(settings.database);
-    const productRepo = new TrackedProductRepository(pool);
 
     try {
+        // First, get the current retailer ID from the database
+        const retailerResult = await pool.query(`
+            SELECT id FROM retailers WHERE name = 'Best Buy' LIMIT 1
+        `);
+
+        if (retailerResult.rows.length === 0) {
+            throw new Error('Best Buy retailer not found in database');
+        }
+
+        const retailerId = retailerResult.rows[0].id;
+        logger.info(`Found Best Buy retailer ID: ${retailerId}`);
+
+        const productRepo = new TrackedProductRepository(pool);
+
         const product = await productRepo.create({
             sku: '6525421',  // iPhone 15 Pro Max SKU at Best Buy
-            retailerId: settings.retailers.bestbuy.retailerId,
+            retailerId: retailerId, // Use the retailer ID from the database
             name: 'iPhone 15 Pro Max',
             productId: '',
             validationRules: {

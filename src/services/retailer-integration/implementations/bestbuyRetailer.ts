@@ -3,6 +3,7 @@ import { Product } from '../interfaces/product';
 import {BestBuyProductResponse, BestBuyConfig, BestBuyApiSearchResponse} from '../interfaces/bestbuy';
 import { logger } from 'u/logger';
 import { HttpWarning, HttpWarningFactory } from 'services/shared/types';
+import {Pool} from "pg";
 
 type ProductResponse<T> = Promise<{ data?: T; warning?: HttpWarning }>;
 
@@ -10,14 +11,37 @@ export class BestBuyService implements RetailerService {
   private requestQueue: (() => Promise<any>)[] = [];
   private isProcessingQueue = false;
   private readonly requestDelay = 3000;
-  private readonly _retailerId: string;
+  private _retailerId: string | null = null;
 
-  constructor(private config: BestBuyConfig) {
-    this._retailerId = config.retailerId;  // Get it from config
+  constructor(
+    private config: Omit<BestBuyConfig, 'retailerId'>,
+    private pool: Pool
+  ) {
     logger.info('BestBuy service initialized with 5 second request delay');
   }
 
+  async initialize(): Promise<void> {
+    try {
+      const result = await this.pool.query<{ id: string }>(`
+        SELECT id FROM retailers WHERE name = 'Best Buy' LIMIT 1
+      `);
+
+      if (result.rows.length === 0) {
+        throw new Error('Best Buy retailer not found in database');
+      }
+
+      this._retailerId = result.rows[0].id;
+      logger.info(`Initialized BestBuy service with retailer ID: ${this._retailerId}`);
+    } catch (error) {
+      logger.error(`Failed to initialize BestBuy service: ${error}`);
+      throw error;
+    }
+  }
+
   get retailerId(): string {
+    if (!this._retailerId) {
+      throw new Error('BestBuy service not initialized');
+    }
     return this._retailerId;
   }
 

@@ -6,7 +6,6 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
-    "test": "bun test",
     "clean": "rm -rf dist",
     // Individual test files
     "test:basic": "bun test basic.test.ts",

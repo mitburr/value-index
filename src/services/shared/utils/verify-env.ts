@@ -1,50 +1,54 @@
 // src/services/shared/utils/verify-env.ts
 import { config, DotenvConfigOptions } from 'dotenv';
 import { logger } from './logger';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-import { search } from 'u/file-name-search';
-import {FileNotFoundException, MultipleFilesFoundException} from "@/services/shared/types/errors";
+async function findRootEnvFile(): Promise<string> {
+  // Get the directory of the current file
+  const currentDir = dirname(fileURLToPath(import.meta.url));
 
-let options: DotenvConfigOptions
+  // Navigate up to the project root (3 levels up from src/services/shared/utils)
+  const projectRoot = join(currentDir, '..', '..', '..', '..');
 
-try {
-  const envPath = await search.findFile('.env');
-  logger.info(`Found file at: ${envPath}`, 'info');
-  options = {
-      path: envPath
-  }
-
-} catch (error) {
-  if (error instanceof FileNotFoundException) {
-    throw FileNotFoundException
-  } else if (error instanceof MultipleFilesFoundException) {
-    throw MultipleFilesFoundException
-  }
+  // Return the path to the root .env file
+  return join(projectRoot, '.env');
 }
 
-export function verifyEnv(): void {
- const result = config(options);
+export async function verifyEnv(): Promise<void> {
+  try {
+    const envPath = await findRootEnvFile();
+    logger.info(`Using .env file at: ${envPath}`);
 
- if (result.error) {
-   logger.error('Failed to load .env file');
-   throw result.error;
- }
+    const result = config({
+      path: envPath
+    });
 
- const requiredVars = [
-   'POSTGRES_USER',
-   'POSTGRES_PASSWORD',
-   'POSTGRES_HOST',
-   'POSTGRES_PORT',
-   'POSTGRES_DB',
-   'POSTGRES_TEST_DB'
- ];
+    if (result.error) {
+      logger.error('Failed to load .env file');
+      throw result.error;
+    }
 
- const missing = requiredVars.filter(varName => !process.env[varName]);
+    const requiredVars = [
+      'POSTGRES_USER',
+      'POSTGRES_PASSWORD',
+      'POSTGRES_HOST',
+      'POSTGRES_PORT',
+      'POSTGRES_DB',
+      'POSTGRES_TEST_DB'
+    ];
 
- if (missing.length > 0) {
-   logger.error(`Missing required environment variables: ${missing.join(', ')}`);
-   throw new Error('Missing required environment variables');
- }
+    const missing = requiredVars.filter(varName => !process.env[varName]);
 
- logger.success('Environment variables loaded successfully');
+    if (missing.length > 0) {
+      logger.error(`Missing required environment variables: ${missing.join(', ')}`);
+      throw new Error('Missing required environment variables');
+    }
+
+    logger.success('Environment variables loaded successfully');
+  } catch (error) {
+    logger.error(`Failed to verify environment: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
 }
