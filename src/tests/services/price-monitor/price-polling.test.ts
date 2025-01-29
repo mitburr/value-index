@@ -56,7 +56,7 @@ describe('PricePollingService', () => {
     }));
 
     await productRepo.create({
-      sku: 'test-sku',
+      sku: '6525421',
       retailerId,
       productId: 'testproduct1234',
       name: 'Test Product',
@@ -78,7 +78,7 @@ describe('PricePollingService', () => {
     }));
 
     await productRepo.create({
-      sku: 'test-sku',
+      sku: '6525421',
       retailerId,
       productId: 'testproduct1234',
       name: 'Test Product',

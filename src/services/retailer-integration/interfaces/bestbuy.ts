@@ -12,6 +12,18 @@ export interface BestBuyProductResponse {
   onlineAvailability: boolean;
 }
 
+export interface BestBuyApiSearchResponse {
+  from: number;
+  to: number;
+  currentPage: number;
+  total: number;
+  totalPages: number;
+  queryTime: string;
+  totalTime: string;
+  partial: boolean;
+  products: BestBuyProductResponse[];
+}
+
 
 export interface BestBuyConfig {
   apiKey: string;

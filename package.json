@@ -7,7 +7,36 @@
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "test": "bun test",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    // Individual test files
+    "test:basic": "bun test basic.test.ts",
+    "test:settings": "bun test settings/settings.test.ts",
+    "test:retailer": "bun test retailer.test.ts",
+
+    // Database tests
+    "test:db": "bun test db/db.test.ts db/product.test.ts",
+    "test:db:core": "bun test db/db.test.ts",
+    "test:db:product": "bun test db/product.test.ts",
+
+    // Price monitor tests
+    "test:price-monitor": "bun test services/price-monitor/*.test.ts",
+    "test:price-monitor:polling": "bun test services/price-monitor/price-polling.test.ts",
+    "test:price-monitor:tracked": "bun test services/price-monitor/tracked-product-repository.test.ts",
+
+    // Retailer integration tests
+    "test:retailer-integration": "bun test services/retailer-integration/**/**.test.ts",
+    "test:retailer-integration:unit": "bun test services/retailer-integration/unit-tests/retailer.test.ts",
+    "test:retailer-integration:integration": "bun test services/retailer-integration/integration-tests/bestBuyService.test.ts",
+
+    // Group tests by type
+    "test:unit": "bun test $(find . -name '*.test.ts' ! -path './services/retailer-integration/integration-tests/*')",
+    "test:integration": "bun test services/retailer-integration/integration-tests/*.test.ts",
+
+    // Run all tests
+    "test": "bun test",
+
+    // Run all tests with coverage
+    "test:coverage": "bun test --coverage"
   },
   "devDependencies": {
     "@types/pg": "^8.11.10",
