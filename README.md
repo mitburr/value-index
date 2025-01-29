@@ -217,3 +217,68 @@ Best practices:
 2. Include relevant context
 3. Structure data for readability
 4. Use sections for process flows
+
+
+## Development
+
+### Running Tests
+There are several test suites available. You can run them individually or together using the following commands:
+
+```bash
+# Run all tests
+bun test
+
+# Run tests with coverage report
+bun run test:coverage
+
+# Individual test files
+bun run test:basic          # Basic functionality tests
+bun run test:settings      # Settings and configuration tests
+bun run test:retailer      # Core retailer functionality tests
+
+# Database tests
+bun run test:db            # All database tests
+bun run test:db:core       # Core database functionality
+bun run test:db:product    # Product-specific database tests
+
+# Price Monitor tests
+bun run test:price-monitor           # All price monitoring tests
+bun run test:price-monitor:polling   # Price polling functionality
+bun run test:price-monitor:tracked   # Tracked product repository tests
+
+# Retailer Integration tests
+bun run test:retailer-integration          # All retailer integration tests
+bun run test:retailer-integration:unit     # Unit tests for retailer service
+bun run test:retailer-integration:integration # Live API integration tests
+
+# Group tests by type
+bun run test:unit         # All unit tests
+bun run test:integration  # All integration tests
+```
+
+### Test Organization
+The test suite follows a structured organization:
+```
+/tests
+├── basic.test.ts             # Basic functionality tests
+├── db/                       # Database tests
+│   ├── db.test.ts
+│   └── product.test.ts
+├── services/
+│   ├── price-monitor/        # Price monitoring service tests
+│   │   ├── price-polling.test.ts
+│   │   └── tracked-product-repository.test.ts
+│   └── retailer-integration/ # Retailer integration tests
+│       ├── integration-tests/
+│       │   └── bestBuyService.test.ts
+│       └── unit-tests/
+│           └── retailer.test.ts
+├── settings/                 # Configuration tests
+│   └── settings.test.ts
+└── utils/                   # Test utilities
+    ├── mockPool.ts
+    └── testDb.ts
+```
+
+The tests are organized by domain and split between unit tests and integration tests where appropriate. Integration tests that interact with external APIs (like Best Buy) are kept separate from unit tests to maintain test isolation and reliability.
+```
